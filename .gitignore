@@ -1,0 +1,20 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.swp
+*.swo
+
+# Virtual environment
+venv/
+ENV/
+.env/
+
+# Editor files
+.vscode/
+*.idea/
+
+# OS files
+.DS_Store
+*.log

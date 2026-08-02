@@ -1,0 +1,85 @@
+{
+  "Nmap": {
+    "base": "nmap",
+    "target_format": "{target}",
+    "flags": [
+      {"flag": "-sS", "desc": "TCP SYN (Stealth) Scan", "has_input": false},
+      {"flag": "-sT", "desc": "TCP Connect Scan", "has_input": false},
+      {"flag": "-p", "desc": "Specific Ports", "has_input": true, "placeholder": "80,443,8080"},
+      {"flag": "-T", "desc": "Timing Template (0-5)", "has_input": true, "options": ["0", "1", "2", "3", "4", "5"]},
+      {"flag": "-A", "desc": "Aggressive Scan", "has_input": false},
+      {"flag": "-O", "desc": "OS Detection", "has_input": false}
+    ],
+    "presets": {
+      "Custom": {},
+      "Quick Scan": {"-T": "4"},
+      "Specific Port Scan": {"-p": "80,443", "-sS": "", "-T": "4"}
+    }
+  },
+  "Gobuster": {
+    "base": "gobuster dir",
+    "target_format": "-u {target}",
+    "flags": [
+      {"flag": "-w", "desc": "Wordlist path", "has_input": true, "placeholder": "/path/to/wordlist.txt"},
+      {"flag": "-t", "desc": "Threads", "has_input": true, "placeholder": "50"},
+      {"flag": "-x", "desc": "Extensions", "has_input": true, "placeholder": "php,txt,html"},
+      {"flag": "-k", "desc": "Skip SSL Verification", "has_input": false}
+    ],
+    "presets": {
+      "Custom": {},
+      "Fast Common Search": {"-w": "/usr/share/wordlists/dirb/common.txt", "-t": "50"},
+      "PHP/TXT Search": {"-w": "/usr/share/wordlists/dirb/common.txt", "-t": "50", "-x": "php,txt"}
+    }
+  },
+  "FFUF": {
+    "base": "ffuf",
+    "target_format": "-u {target}/FUZZ",
+    "flags": [
+      {"flag": "-w", "desc": "Wordlist path", "has_input": true, "placeholder": "/path/to/wordlist.txt"},
+      {"flag": "-c", "desc": "Colorize output", "has_input": false},
+      {"flag": "-t", "desc": "Threads", "has_input": true, "placeholder": "40"},
+      {"flag": "-mc", "desc": "Match HTTP codes", "has_input": true, "placeholder": "200,301"}
+    ],
+    "presets": {
+      "Custom": {},
+      "Standard Fuzz": {"-w": "/usr/share/wordlists/dirb/common.txt", "-c": "", "-t": "40"}
+    }
+  },
+  "SQLMap": {
+    "base": "sqlmap",
+    "target_format": "-u \"{target}\"",
+    "flags": [
+      {"flag": "--dbs", "desc": "Enumerate databases", "has_input": false},
+      {"flag": "--tables", "desc": "Enumerate tables", "has_input": false},
+      {"flag": "-D", "desc": "Database name", "has_input": true, "placeholder": "db_name"},
+      {"flag": "-T", "desc": "Table name", "has_input": true, "placeholder": "table_name"},
+      {"flag": "--level", "desc": "Level of tests", "has_input": true, "options": ["1", "2", "3", "4", "5"]},
+      {"flag": "--risk", "desc": "Risk of tests", "has_input": true, "options": ["1", "2", "3"]},
+      {"flag": "--dump", "desc": "Dump database entries", "has_input": false},
+      {"flag": "--batch", "desc": "Never ask for user input", "has_input": false}
+    ],
+    "presets": {
+      "Custom": {},
+      "List Databases": {"--dbs": "", "--batch": ""},
+      "Dump Specific Table": {"-D": "db_name", "-T": "table_name", "--dump": "", "--batch": ""},
+      "High Level/Risk": {"--level": "5", "--risk": "3", "--batch": ""}
+    }
+  },
+  "Hydra": {
+    "base": "hydra",
+    "target_format": "{target}",
+    "flags": [
+      {"flag": "-l", "desc": "Single username", "has_input": true, "placeholder": "admin"},
+      {"flag": "-L", "desc": "Usernames list path", "has_input": true, "placeholder": "users.txt"},
+      {"flag": "-p", "desc": "Single password", "has_input": true, "placeholder": "password123"},
+      {"flag": "-P", "desc": "Passwords list path", "has_input": true, "placeholder": "rockyou.txt"},
+      {"flag": "-t", "desc": "Parallel tasks", "has_input": true, "placeholder": "4"},
+      {"flag": "ssh", "desc": "Protocol: SSH", "has_input": false},
+      {"flag": "ftp", "desc": "Protocol: FTP", "has_input": false}
+    ],
+    "presets": {
+      "Custom": {},
+      "SSH Brute Force (List)": {"-L": "users.txt", "-P": "rockyou.txt", "-t": "4", "ssh": ""}
+    }
+  }
+}
