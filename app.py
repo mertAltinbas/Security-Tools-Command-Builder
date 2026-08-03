@@ -22,21 +22,30 @@ class CommandBuilderApp(ctk.CTk):
 
         self.sidebar_frame = ctk.CTkFrame(self, width=220, corner_radius=0)
         self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
-        self.sidebar_frame.grid_rowconfigure(10, weight=1)
+        self.sidebar_frame.grid_rowconfigure(1, weight=1)
+        self.sidebar_frame.grid_columnconfigure(0, weight=1)
 
         self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="Tools", font=ctk.CTkFont(size=20, weight="bold"))
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 20))
 
+        self.tools_scroll_frame = ctk.CTkScrollableFrame(self.sidebar_frame, fg_color="transparent")
+        self.tools_scroll_frame.grid(row=1, column=0, sticky="nsew")
+        self.tools_scroll_frame.grid_columnconfigure(0, weight=1)
+
+        self.disclaimer_frame = ctk.CTkFrame(self.sidebar_frame, corner_radius=0, fg_color=("gray85", "gray17"))
+        self.disclaimer_frame.grid(row=2, column=0, sticky="ew")
+        self.disclaimer_frame.grid_columnconfigure(0, weight=1)
+
         self.disclaimer_label = ctk.CTkLabel(
-            self.sidebar_frame,
+            self.disclaimer_frame,
             text="Note: It is the user's responsibility to ensure selected flags are compatible. Conflicting flags may cause the tool to fail in the terminal.",
             text_color="#FF7300",
-            font=ctk.CTkFont(size=13, weight="bold"),
+            font=ctk.CTkFont(size=13),
             justify="left",
             wraplength=180,
             anchor="w"
         )
-        self.disclaimer_label.grid(row=11, column=0, sticky="sew", padx=20, pady=(10, 20))
+        self.disclaimer_label.grid(row=0, column=0, sticky="ew", padx=20, pady=15)
 
         self.main_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.main_frame.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
@@ -76,10 +85,10 @@ class CommandBuilderApp(ctk.CTk):
         self.flag_widgets = []
 
         for i, tool_name in enumerate(self.tools_data.keys()):
-            btn = ctk.CTkButton(self.sidebar_frame, text=tool_name, 
+            btn = ctk.CTkButton(self.tools_scroll_frame, text=tool_name, 
                                 command=lambda t=tool_name: self.load_tool(t),
                                 fg_color="transparent", border_width=1, text_color=("gray10", "#DCE4EE"))
-            btn.grid(row=i+1, column=0, padx=20, pady=10, sticky="ew")
+            btn.grid(row=i, column=0, padx=20, pady=10, sticky="ew")
 
         if self.tools_data:
             first_tool = list(self.tools_data.keys())[0]
