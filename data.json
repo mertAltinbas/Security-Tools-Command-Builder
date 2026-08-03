@@ -1,15 +1,33 @@
 {
   "Nmap": {
-    "base": "nmap",
-    "target_format": "{target}",
-    "flags": [
-      {"flag": "-sS", "desc": "TCP SYN (Stealth) Scan", "has_input": false},
-      {"flag": "-sT", "desc": "TCP Connect Scan", "has_input": false},
-      {"flag": "-p", "desc": "Specific Ports", "has_input": true, "placeholder": "80,443,8080"},
-      {"flag": "-T", "desc": "Timing Template (0-5)", "has_input": true, "options": ["0", "1", "2", "3", "4", "5"]},
-      {"flag": "-A", "desc": "Aggressive Scan", "has_input": false},
-      {"flag": "-O", "desc": "OS Detection", "has_input": false}
-    ],
+    "base_command": "nmap",
+    "mandatory_inputs": ["Target"],
+    "categories": {
+      "Target Specification": [
+        {"flag": "-iL", "desc": "Input from list of hosts/networks", "has_input": true, "placeholder": "/path/to/targets.txt", "risk_level": 2},
+        {"flag": "-iR", "desc": "Choose random targets", "has_input": true, "placeholder": "100", "risk_level": 3},
+        {"flag": "--exclude","desc": "Exclude hosts/networks","has_input": true,"placeholder": "192.168.1.1,10.0.0.1","risk_level": 1},
+        {"flag": "--excludefile","desc": "Exclude list from file","has_input": true,"placeholder": "exclude.txt","risk_level": 1}
+      ],
+      "Host Discovery": [
+        {"flag": "-sL","desc": "List Scan - simply list targets to scan","has_input": false,"risk_level": 1},
+        {"flag": "-sn","desc": "Ping Scan - disable port scan","has_input": false,"risk_level": 2},
+        {"flag": "-Pn","desc": "Treat all hosts as online (skip host discovery)","has_input": false,"risk_level": 3},
+        {"flag": "-PS","desc": "TCP SYN discovery to given ports","has_input": true,"placeholder": "22,80,443","risk_level": 3},
+        {"flag": "-PA","desc": "TCP ACK discovery to given ports","has_input": true,"placeholder": "22,80,443","risk_level": 3},
+        {"flag": "-PU","desc": "UDP discovery to given ports","has_input": true,"placeholder": "53,161","risk_level": 3},
+        {"flag": "-PY","desc": "SCTP discovery to given ports","has_input": true,"placeholder": "80,443","risk_level": 3},
+        {"flag": "-PE","desc": "ICMP echo request discovery probes","has_input": false,"risk_level": 3},
+        {"flag": "-PP","desc": "ICMP timestamp request discovery probes","has_input": false,"risk_level": 3},
+        {"flag": "-PM","desc": "ICMP netmask request discovery probes","has_input": false,"risk_level": 3},
+        {"flag": "-PO","desc": "IP Protocol Ping","has_input": true,"placeholder": "1,2,4","risk_level": 4},
+        {"flag": "-n","desc": "Never do DNS resolution","has_input": false,"risk_level": 1},
+        {"flag": "-R","desc": "Always resolve DNS","has_input": false,"risk_level": 2 },
+        {"flag": "--dns-servers","desc": "Specify custom DNS servers","has_input": true,"placeholder": "8.8.8.8,1.1.1.1","risk_level": 2},
+        {"flag": "--system-dns","desc": "Use OS's DNS resolver","has_input": false,"risk_level": 2},
+        {"flag": "--traceroute","desc": "Trace hop path to each host","has_input": false,"risk_level": 4}
+      ]
+    },
     "presets": {
       "Custom": {},
       "Quick Scan": {"-T": "4"},
