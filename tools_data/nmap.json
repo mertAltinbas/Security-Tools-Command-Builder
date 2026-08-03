@@ -4,15 +4,15 @@
     "mandatory_inputs": ["Target"],
     "categories": {
       "Target Specification": [
-        {"flag": "-iL", "desc": "Input from list of hosts/networks", "has_input": true, "placeholder": "/path/to/targets.txt", "risk_level": 2},
+        {"flag": "-iL", "desc": "Input from list of hosts/networks", "has_input": true, "placeholder": "/path/to/targets.txt", "risk_level": 2, "basic": true},
         {"flag": "-iR", "desc": "Choose random targets", "has_input": true, "placeholder": "100", "risk_level": 3},
         {"flag": "--exclude","desc": "Exclude hosts/networks","has_input": true,"placeholder": "192.168.1.1,10.0.0.1","risk_level": 1},
         {"flag": "--excludefile","desc": "Exclude list from file","has_input": true,"placeholder": "exclude.txt","risk_level": 1}
       ],
       "Host Discovery": [
         {"flag": "-sL","desc": "List Scan - simply list targets to scan","has_input": false,"risk_level": 1},
-        {"flag": "-sn","desc": "Ping Scan - disable port scan","has_input": false,"risk_level": 2},
-        {"flag": "-Pn","desc": "Treat all hosts as online (skip host discovery)","has_input": false,"risk_level": 3},
+        {"flag": "-sn","desc": "Ping Scan - disable port scan","has_input": false,"risk_level": 2, "basic": true},
+        {"flag": "-Pn","desc": "Treat all hosts as online (skip host discovery)","has_input": false,"risk_level": 3, "basic": true},
         {"flag": "-PS","desc": "TCP SYN discovery to given ports","has_input": true,"placeholder": "22,80,443","risk_level": 3},
         {"flag": "-PA","desc": "TCP ACK discovery to given ports","has_input": true,"placeholder": "22,80,443","risk_level": 3},
         {"flag": "-PU","desc": "UDP discovery to given ports","has_input": true,"placeholder": "53,161","risk_level": 3},
@@ -21,19 +21,19 @@
         {"flag": "-PP","desc": "ICMP timestamp request discovery probes","has_input": false,"risk_level": 3},
         {"flag": "-PM","desc": "ICMP netmask request discovery probes","has_input": false,"risk_level": 3},
         {"flag": "-PO","desc": "IP Protocol Ping","has_input": true,"placeholder": "1,2,4","risk_level": 4},
-        {"flag": "-n","desc": "Never do DNS resolution","has_input": false,"risk_level": 1},
+        {"flag": "-n","desc": "Never do DNS resolution","has_input": false,"risk_level": 1, "basic": true},
         {"flag": "-R","desc": "Always resolve DNS","has_input": false,"risk_level": 2 },
         {"flag": "--dns-servers","desc": "Specify custom DNS servers","has_input": true,"placeholder": "8.8.8.8,1.1.1.1","risk_level": 2},
         {"flag": "--system-dns","desc": "Use OS's DNS resolver","has_input": false,"risk_level": 2},
-        {"flag": "--traceroute","desc": "Trace hop path to each host","has_input": false,"risk_level": 4}
+        {"flag": "--traceroute","desc": "Trace hop path to each host","has_input": false,"risk_level": 4, "basic": true}
       ],
       "Scan Techniques": [
-        {"flag": "-sS", "desc": "TCP SYN scan", "has_input": false, "risk_level": 2},
+        {"flag": "-sS", "desc": "TCP SYN scan", "has_input": false, "risk_level": 2, "basic": true},
         {"flag": "-sT", "desc": "TCP Connect() scan", "has_input": false, "risk_level": 3},
         {"flag": "-sA", "desc": "TCP ACK scan", "has_input": false, "risk_level": 3},
         {"flag": "-sW", "desc": "TCP Window scan", "has_input": false, "risk_level": 3},
         {"flag": "-sM", "desc": "TCP Maimon scan", "has_input": false, "risk_level": 3},
-        {"flag": "-sU", "desc": "UDP Scan", "has_input": false, "risk_level": 3},
+        {"flag": "-sU", "desc": "UDP Scan", "has_input": false, "risk_level": 3, "basic": true},
         {"flag": "-sN", "desc": "TCP Null scan", "has_input": false, "risk_level": 3},
         {"flag": "-sF", "desc": "TCP FIN scan", "has_input": false, "risk_level": 3},
         {"flag": "-sX", "desc": "TCP Xmas scan", "has_input": false, "risk_level": 3},
@@ -45,22 +45,22 @@
         {"flag": "-b", "desc": "FTP bounce scan", "has_input": true, "placeholder": "FTP_relay_host", "risk_level": 4}
       ],
       "Port Specification and Scan Order": [
-        {"flag": "-p", "desc": "Only scan specified ports", "has_input": true, "placeholder": "22,80,1-65535", "risk_level": 2},
+        {"flag": "-p", "desc": "Only scan specified ports", "has_input": true, "placeholder": "22,80,1-65535", "risk_level": 2, "basic": true},
         {"flag": "--exclude-ports", "desc": "Exclude specified ports from scanning", "has_input": true, "placeholder": "80,443", "risk_level": 1},
-        {"flag": "-F", "desc": "Fast mode - Scan fewer ports", "has_input": false, "risk_level": 2},
+        {"flag": "-F", "desc": "Fast mode - Scan fewer ports", "has_input": false, "risk_level": 2, "basic": true},
         {"flag": "-r", "desc": "Scan ports sequentially (don't randomize)", "has_input": false, "risk_level": 3},
         {"flag": "--top-ports", "desc": "Scan <number> most common ports", "has_input": true, "placeholder": "100", "risk_level": 2},
         {"flag": "--port-ratio", "desc": "Scan ports more common than <ratio>", "has_input": true, "placeholder": "0.9", "risk_level": 2}
       ],
       "Service and Version Detection": [
-        {"flag": "-sV", "desc": "Probe open ports to determine service/version info", "has_input": false, "risk_level": 3},
+        {"flag": "-sV", "desc": "Probe open ports to determine service/version info", "has_input": false, "risk_level": 3, "basic": true},
         {"flag": "--version-intensity", "desc": "Set from 0 (light) to 9 (try all probes)", "has_input": true, "options": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"], "risk_level": 3},
         {"flag": "--version-light", "desc": "Limit to most likely probes (intensity 2)", "has_input": false, "risk_level": 2},
         {"flag": "--version-all", "desc": "Try every single probe (intensity 9)", "has_input": false, "risk_level": 4},
         {"flag": "--version-trace", "desc": "Show detailed version scan activity", "has_input": false, "risk_level": 1}
       ],
       "Script Scan": [
-        {"flag": "-sC", "desc": "Equivalent to --script=default", "has_input": false, "risk_level": 4},
+        {"flag": "-sC", "desc": "Equivalent to --script=default", "has_input": false, "risk_level": 4, "basic": true},
         {"flag": "--script", "desc": "Specify Lua scripts or categories", "has_input": true, "placeholder": "vuln,safe,discovery", "risk_level": 4},
         {"flag": "--script-args", "desc": "Provide arguments to scripts", "has_input": true, "placeholder": "user=admin,pass=123", "risk_level": 3},
         {"flag": "--script-args-file", "desc": "Provide NSE script args in a file", "has_input": true, "placeholder": "args.txt", "risk_level": 2},
@@ -69,12 +69,12 @@
         {"flag": "--script-help", "desc": "Show help about scripts", "has_input": true, "placeholder": "vuln", "risk_level": 1}
       ],
       "OS Detection": [
-        {"flag": "-O", "desc": "Enable OS detection", "has_input": false, "risk_level": 4},
+        {"flag": "-O", "desc": "Enable OS detection", "has_input": false, "risk_level": 4, "basic": true},
         {"flag": "--osscan-limit", "desc": "Limit OS detection to promising targets", "has_input": false, "risk_level": 2},
         {"flag": "--osscan-guess", "desc": "Guess OS more aggressively", "has_input": false, "risk_level": 4}
       ],
       "Timing and Performance": [
-        {"flag": "-T", "desc": "Set timing template (higher is faster)", "has_input": true, "options": ["0", "1", "2", "3", "4", "5"], "risk_level": 4},
+        {"flag": "-T", "desc": "Set timing template (higher is faster)", "has_input": true, "options": ["0", "1", "2", "3", "4", "5"], "risk_level": 4, "basic": true},
         {"flag": "--min-hostgroup", "desc": "Parallel host scan group min size", "has_input": true, "placeholder": "50", "risk_level": 3},
         {"flag": "--max-hostgroup", "desc": "Parallel host scan group max size", "has_input": true, "placeholder": "100", "risk_level": 3},
         {"flag": "--min-parallelism", "desc": "Probe parallelization min", "has_input": true, "placeholder": "10", "risk_level": 3},
@@ -106,12 +106,12 @@
         {"flag": "--badsum", "desc": "Send packets with a bogus checksum", "has_input": false, "risk_level": 4}
       ],
       "Output": [
-        {"flag": "-oN", "desc": "Output scan in normal format", "has_input": true, "placeholder": "output.nmap", "risk_level": 1},
+        {"flag": "-oN", "desc": "Output scan in normal format", "has_input": true, "placeholder": "output.nmap", "risk_level": 1, "basic": true},
         {"flag": "-oX", "desc": "Output scan in XML format", "has_input": true, "placeholder": "output.xml", "risk_level": 1},
         {"flag": "-oS", "desc": "Output scan in s|<rIpt kIddi3 format", "has_input": true, "placeholder": "output.sk", "risk_level": 1},
         {"flag": "-oG", "desc": "Output scan in Grepable format", "has_input": true, "placeholder": "output.gnmap", "risk_level": 1},
-        {"flag": "-oA", "desc": "Output in the three major formats at once", "has_input": true, "placeholder": "output_base", "risk_level": 1},
-        {"flag": "-v", "desc": "Increase verbosity level", "has_input": false, "risk_level": 1},
+        {"flag": "-oA", "desc": "Output in the three major formats at once", "has_input": true, "placeholder": "output_base", "risk_level": 1, "basic": true},
+        {"flag": "-v", "desc": "Increase verbosity level", "has_input": false, "risk_level": 1, "basic": true},
         {"flag": "-d", "desc": "Increase debugging level", "has_input": false, "risk_level": 1},
         {"flag": "--reason", "desc": "Display the reason a port is in a particular state", "has_input": false, "risk_level": 1},
         {"flag": "--open", "desc": "Only show open (or possibly open) ports", "has_input": false, "risk_level": 1},
@@ -126,7 +126,7 @@
       ],
       "Misc": [
         {"flag": "-6", "desc": "Enable IPv6 scanning", "has_input": false, "risk_level": 2},
-        {"flag": "-A", "desc": "Enable OS/version detection, script scanning, and traceroute", "has_input": false, "risk_level": 5},
+        {"flag": "-A", "desc": "Enable OS/version detection, script scanning, and traceroute", "has_input": false, "risk_level": 5, "basic": true},
         {"flag": "--datadir", "desc": "Specify custom Nmap data file location", "has_input": true, "placeholder": "/usr/local/share/nmap", "risk_level": 1},
         {"flag": "--send-eth", "desc": "Send using raw ethernet frames", "has_input": false, "risk_level": 3},
         {"flag": "--send-ip", "desc": "Send using raw IP packets", "has_input": false, "risk_level": 3},
