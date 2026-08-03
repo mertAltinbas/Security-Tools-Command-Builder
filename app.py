@@ -3,7 +3,7 @@ import json
 import os
 
 # Set the appearance and color theme for the custom Tkinter UI.
-ctk.set_appearance_mode("Dark")
+ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("blue")
 
 class CommandBuilderApp(ctk.CTk):
