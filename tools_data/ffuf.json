@@ -1,0 +1,94 @@
+{
+    "ffuf": {
+    "base_command": "ffuf",
+    "mandatory_inputs": ["Target URL", "Wordlist"],
+    "categories": {
+      "HTTP Options": [
+        {"flag": "-u", "desc": "Target URL (must contain FUZZ)", "has_input": true, "placeholder": "http://10.10.10.10/FUZZ", "risk_level": 3},
+        {"flag": "-H", "desc": "Header 'Name: Value' (Can be used multiple times)", "has_input": true, "placeholder": "Authorization: Bearer xyz", "risk_level": 2},
+        {"flag": "-X", "desc": "HTTP method to use", "has_input": true, "options": ["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS", "PATCH"], "risk_level": 2},
+        {"flag": "-b", "desc": "Cookie data 'NAME1=VALUE1; NAME2=VALUE2'", "has_input": true, "placeholder": "PHPSESSID=123456", "risk_level": 2},
+        {"flag": "-d", "desc": "POST data", "has_input": true, "placeholder": "username=admin&password=FUZZ", "risk_level": 3},
+        {"flag": "-ignore-body", "desc": "Do not fetch the response content", "has_input": false, "risk_level": 1},
+        {"flag": "-r", "desc": "Follow redirects", "has_input": false, "risk_level": 2},
+        {"flag": "-recursion", "desc": "Scan recursively (URL must end in FUZZ)", "has_input": false, "risk_level": 4},
+        {"flag": "-recursion-depth", "desc": "Maximum recursion depth", "has_input": true, "options": ["1", "2", "3", "4", "5"], "risk_level": 3},
+        {"flag": "-recursion-strategy", "desc": "Recursion strategy", "has_input": true, "options": ["default", "greedy"], "risk_level": 3},
+        {"flag": "-replay-proxy", "desc": "Replay matched requests using this proxy", "has_input": true, "placeholder": "http://127.0.0.1:8080", "risk_level": 2},
+        {"flag": "-sni", "desc": "Target TLS SNI (does not support FUZZ)", "has_input": true, "placeholder": "target.com", "risk_level": 2},
+        {"flag": "-timeout", "desc": "HTTP request timeout in seconds", "has_input": true, "placeholder": "10", "risk_level": 1},
+        {"flag": "-x", "desc": "HTTP Proxy URL", "has_input": true, "placeholder": "http://127.0.0.1:8080", "risk_level": 2}
+      ],
+      "General Options": [
+        {"flag": "-V", "desc": "Show version information", "has_input": false, "risk_level": 1},
+        {"flag": "-ac", "desc": "Automatically calibrate filtering options", "has_input": false, "risk_level": 2},
+        {"flag": "-acc", "desc": "Custom auto-calibration string (Implies -ac)", "has_input": true, "placeholder": "admin,user", "risk_level": 2},
+        {"flag": "-c", "desc": "Colorize output", "has_input": false, "risk_level": 1},
+        {"flag": "-maxtime", "desc": "Maximum running time in seconds", "has_input": true, "placeholder": "300", "risk_level": 1},
+        {"flag": "-maxtime-job", "desc": "Maximum running time per job in seconds", "has_input": true, "placeholder": "60", "risk_level": 1},
+        {"flag": "-noninteractive", "desc": "Disable interactive console functionality", "has_input": false, "risk_level": 1},
+        {"flag": "-p", "desc": "Delay between requests in seconds (e.g. 0.1 or 0.1-2.0)", "has_input": true, "placeholder": "0.1-2.0", "risk_level": 2},
+        {"flag": "-rate", "desc": "Rate of requests per second", "has_input": true, "placeholder": "100", "risk_level": 4},
+        {"flag": "-s", "desc": "Silent mode (Do not print additional info)", "has_input": false, "risk_level": 1},
+        {"flag": "-sa", "desc": "Stop on all error cases (Implies -sf and -se)", "has_input": false, "risk_level": 2},
+        {"flag": "-se", "desc": "Stop on spurious errors", "has_input": false, "risk_level": 2},
+        {"flag": "-sf", "desc": "Stop when > 95% of responses return 403 Forbidden", "has_input": false, "risk_level": 2},
+        {"flag": "-t", "desc": "Number of concurrent threads", "has_input": true, "placeholder": "40", "risk_level": 4},
+        {"flag": "-v", "desc": "Verbose output (prints full URL and redirects)", "has_input": false, "risk_level": 2}
+      ],
+      "Matcher Options": [
+        {"flag": "-mc", "desc": "Match HTTP status codes", "has_input": true, "placeholder": "200,204,301,302,307,401,403", "risk_level": 1},
+        {"flag": "-ml", "desc": "Match amount of lines in response", "has_input": true, "placeholder": "42,100-200", "risk_level": 1},
+        {"flag": "-mr", "desc": "Match regexp", "has_input": true, "placeholder": "admin|root", "risk_level": 1},
+        {"flag": "-ms", "desc": "Match HTTP response size", "has_input": true, "placeholder": "4242", "risk_level": 1},
+        {"flag": "-mt", "desc": "Match ms to first response byte (>100 or <100)", "has_input": true, "placeholder": ">100", "risk_level": 1},
+        {"flag": "-mw", "desc": "Match amount of words in response", "has_input": true, "placeholder": "100-500", "risk_level": 1}
+      ],
+      "Filter Options": [
+        {"flag": "-fc", "desc": "Filter HTTP status codes", "has_input": true, "placeholder": "404,500", "risk_level": 1},
+        {"flag": "-fl", "desc": "Filter amount of lines in response", "has_input": true, "placeholder": "0,10-20", "risk_level": 1},
+        {"flag": "-fr", "desc": "Filter regexp", "has_input": true, "placeholder": "Forbidden", "risk_level": 1},
+        {"flag": "-fs", "desc": "Filter HTTP response size", "has_input": true, "placeholder": "0,1234", "risk_level": 1},
+        {"flag": "-ft", "desc": "Filter ms to first response byte (>100 or <100)", "has_input": true, "placeholder": ">100", "risk_level": 1},
+        {"flag": "-fw", "desc": "Filter amount of words in response", "has_input": true, "placeholder": "0,5-10", "risk_level": 1}
+      ],
+      "Input Options": [
+        {"flag": "-D", "desc": "DirSearch wordlist compatibility mode (use with -e)", "has_input": false, "risk_level": 1},
+        {"flag": "-e", "desc": "Comma separated list of extensions", "has_input": true, "placeholder": ".php,.txt,.html", "risk_level": 1},
+        {"flag": "-ic", "desc": "Ignore wordlist comments", "has_input": false, "risk_level": 1},
+        {"flag": "-input-cmd", "desc": "Command producing input (Overrides -w)", "has_input": true, "placeholder": "seq 1 1000", "risk_level": 2},
+        {"flag": "-input-num", "desc": "Number of inputs to test (use with -input-cmd)", "has_input": true, "placeholder": "100", "risk_level": 1},
+        {"flag": "-input-shell", "desc": "Shell to be used for running command", "has_input": true, "placeholder": "/bin/bash", "risk_level": 2},
+        {"flag": "-mode", "desc": "Multi-wordlist operation mode", "has_input": true, "options": ["clusterbomb", "pitchfork"], "risk_level": 1},
+        {"flag": "-request", "desc": "File containing the raw HTTP request", "has_input": true, "placeholder": "request.txt", "risk_level": 2},
+        {"flag": "-request-proto", "desc": "Protocol to use along with raw request", "has_input": true, "options": ["http", "https"], "risk_level": 1},
+        {"flag": "-w", "desc": "Wordlist file path (/path:KEYWORD)", "has_input": true, "placeholder": "/path/to/wordlist.txt:FUZZ", "risk_level": 1}
+      ],
+      "Output Options": [
+        {"flag": "-debug-log", "desc": "Write internal logging to specified file", "has_input": true, "placeholder": "debug.log", "risk_level": 1},
+        {"flag": "-o", "desc": "Write output to file", "has_input": true, "placeholder": "results.json", "risk_level": 1},
+        {"flag": "-od", "desc": "Directory path to store matched results", "has_input": true, "placeholder": "/tmp/results/", "risk_level": 1},
+        {"flag": "-of", "desc": "Output file format", "has_input": true, "options": ["json", "ejson", "html", "md", "csv", "ecsv", "all"], "risk_level": 1},
+        {"flag": "-or", "desc": "Don't create output file if no results", "has_input": false, "risk_level": 1}
+      ]
+    },
+    "presets": {
+      "Custom": {},
+      "Directory Fuzzing (Standard)": {
+        "-mc": "200,204,301,302,307,401,403",
+        "-fc": "404",
+        "-t": "40"
+      },
+      "Silent Scan via Burp Proxy": {
+        "-x": "http://127.0.0.1:8080",
+        "-s": "",
+        "-fc": "404"
+      },
+      "Recursive Subdomain Discovery": {
+        "-recursion": "",
+        "-recursion-depth": "2",
+        "-mc": "200"
+      }
+    }
+  }
+}
