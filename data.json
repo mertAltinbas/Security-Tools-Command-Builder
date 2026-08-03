@@ -43,6 +43,35 @@
         {"flag": "-sZ", "desc": "SCTP COOKIE-ECHO scan", "has_input": false, "risk_level": 3},
         {"flag": "-sO", "desc": "IP protocol scan", "has_input": false, "risk_level": 3},
         {"flag": "-b", "desc": "FTP bounce scan", "has_input": true, "placeholder": "FTP_relay_host", "risk_level": 4}
+      ],
+      "Port Specification and Scan Order": [
+        {"flag": "-p", "desc": "Only scan specified ports", "has_input": true, "placeholder": "22,80,1-65535", "risk_level": 2},
+        {"flag": "--exclude-ports", "desc": "Exclude specified ports from scanning", "has_input": true, "placeholder": "80,443", "risk_level": 1},
+        {"flag": "-F", "desc": "Fast mode - Scan fewer ports", "has_input": false, "risk_level": 2},
+        {"flag": "-r", "desc": "Scan ports sequentially (don't randomize)", "has_input": false, "risk_level": 3},
+        {"flag": "--top-ports", "desc": "Scan <number> most common ports", "has_input": true, "placeholder": "100", "risk_level": 2},
+        {"flag": "--port-ratio", "desc": "Scan ports more common than <ratio>", "has_input": true, "placeholder": "0.9", "risk_level": 2}
+      ],
+      "Service and Version Detection": [
+        {"flag": "-sV", "desc": "Probe open ports to determine service/version info", "has_input": false, "risk_level": 3},
+        {"flag": "--version-intensity", "desc": "Set from 0 (light) to 9 (try all probes)", "has_input": true, "options": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"], "risk_level": 3},
+        {"flag": "--version-light", "desc": "Limit to most likely probes (intensity 2)", "has_input": false, "risk_level": 2},
+        {"flag": "--version-all", "desc": "Try every single probe (intensity 9)", "has_input": false, "risk_level": 4},
+        {"flag": "--version-trace", "desc": "Show detailed version scan activity", "has_input": false, "risk_level": 1}
+      ],
+      "Script Scan": [
+        {"flag": "-sC", "desc": "Equivalent to --script=default", "has_input": false, "risk_level": 4},
+        {"flag": "--script", "desc": "Specify Lua scripts or categories", "has_input": true, "placeholder": "vuln,safe,discovery", "risk_level": 4},
+        {"flag": "--script-args", "desc": "Provide arguments to scripts", "has_input": true, "placeholder": "user=admin,pass=123", "risk_level": 3},
+        {"flag": "--script-args-file", "desc": "Provide NSE script args in a file", "has_input": true, "placeholder": "args.txt", "risk_level": 2},
+        {"flag": "--script-trace", "desc": "Show all data sent and received", "has_input": false, "risk_level": 1},
+        {"flag": "--script-updatedb", "desc": "Update the script database", "has_input": false, "risk_level": 1},
+        {"flag": "--script-help", "desc": "Show help about scripts", "has_input": true, "placeholder": "vuln", "risk_level": 1}
+      ],
+      "OS Detection": [
+        {"flag": "-O", "desc": "Enable OS detection", "has_input": false, "risk_level": 4},
+        {"flag": "--osscan-limit", "desc": "Limit OS detection to promising targets", "has_input": false, "risk_level": 2},
+        {"flag": "--osscan-guess", "desc": "Guess OS more aggressively", "has_input": false, "risk_level": 4}
       ]
     },
     "presets": {
