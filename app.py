@@ -330,6 +330,9 @@ class CommandBuilderApp(ctk.CTk):
         # Re-filter the currently visible tool's flags for the new mode.
         self.apply_mode_filter()
         self.update_command()
+        if self.current_tool_frame is not None:
+            self.current_tool_frame.update_idletasks()
+            self.current_tool_frame._parent_canvas.yview_moveto(0)
 
     def apply_mode_filter(self):
         # Show/hide individual flag rows depending on Basic vs Advanced mode.
