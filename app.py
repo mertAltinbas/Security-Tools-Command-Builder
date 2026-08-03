@@ -67,9 +67,6 @@ class CommandBuilderApp(ctk.CTk):
         self.preset_menu = ctk.CTkOptionMenu(self.preset_frame, variable=self.preset_var, command=self.apply_preset)
         self.preset_menu.pack(side="left")
 
-        self.flags_frame = ctk.CTkScrollableFrame(self.main_frame, label_text="Parameters & Descriptions")
-        self.flags_frame.grid(row=2, column=0, sticky="nsew", pady=(0, 15))
-
         self.output_frame = ctk.CTkFrame(self.main_frame)
         self.output_frame.grid(row=3, column=0, sticky="ew")
         self.output_frame.grid_columnconfigure(0, weight=1)
@@ -81,6 +78,8 @@ class CommandBuilderApp(ctk.CTk):
         self.copy_btn = ctk.CTkButton(self.output_frame, text="Copy", command=self.copy_command, width=120, height=45)
         self.copy_btn.grid(row=0, column=1, padx=(0, 10), pady=10)
 
+        self.tool_caches = {}
+        self.current_tool_frame = None
         self.current_tool = None
         self.flag_widgets = []
 
@@ -104,7 +103,7 @@ class CommandBuilderApp(ctk.CTk):
         # Read tool definitions from the local JSON file.
         tools_dir = "tools_data"
         combined_data = {}
-        
+
         if os.path.exists(tools_dir):
             for file_name in os.listdir(tools_dir):
                 if file_name.endswith(".json"):
@@ -119,79 +118,91 @@ class CommandBuilderApp(ctk.CTk):
         return combined_data
 
     def load_tool(self, tool_name):
-        # Activate a tool and rebuild the flag UI for it.
         self.current_tool = tool_name
-        self.flags_frame.configure(label_text=f"{tool_name} Parameters")
-        
         tool_info = self.tools_data[tool_name]
         
-        # Update the preset list for the selected tool.
         presets = list(tool_info.get("presets", {"Custom": {}}).keys())
         self.preset_menu.configure(values=presets)
         self.preset_var.set("Custom")
 
-        for widget in self.flags_frame.winfo_children():
-            widget.destroy()
-        self.flag_widgets.clear()
+        if self.current_tool_frame:
+            self.current_tool_frame.grid_remove()
 
-        categories = tool_info.get("categories", {})
-        row_index = 0
+        if tool_name in self.tool_caches:
+            self.current_tool_frame = self.tool_caches[tool_name]["frame"]
+            self.flag_widgets = self.tool_caches[tool_name]["flag_widgets"]
+            self.current_tool_frame.grid()  # Gizlenmiş çerçeveyi tekrar görünür yap
+        else:
+            new_frame = ctk.CTkScrollableFrame(self.main_frame, label_text=f"{tool_name} Parameters")
+            new_frame.grid(row=2, column=0, sticky="nsew", pady=(0, 15))
+            
+            new_flag_widgets = []
+            categories = tool_info.get("categories", {})
+            row_index = 0
 
-        for category_name, flags in categories.items():
-            cat_label = ctk.CTkLabel(self.flags_frame, text=f"── {category_name} ──", 
-                                     font=ctk.CTkFont(size=14, weight="bold"), text_color="#3B8ED0")
-            cat_label.grid(row=row_index, column=0, columnspan=2, sticky="w", pady=(15, 5), padx=5)
-            row_index += 1
-
-            for flag_item in flags:
-                flag = flag_item["flag"]
-                desc = flag_item["desc"]
-                has_input = flag_item.get("has_input", False)
-                options = flag_item.get("options", None)
-                
-                var = ctk.StringVar(value="")
-                
-                row_frame = ctk.CTkFrame(self.flags_frame, fg_color="transparent")
-                row_frame.grid(row=row_index, column=0, sticky="ew", pady=2)
-                row_frame.grid_columnconfigure(1, weight=1)
+            for category_name, flags in categories.items():
+                cat_label = ctk.CTkLabel(new_frame, text=f"── {category_name} ──", 
+                                         font=ctk.CTkFont(size=14, weight="bold"), text_color="#3B8ED0")
+                cat_label.grid(row=row_index, column=0, columnspan=2, sticky="w", pady=(15, 5), padx=5)
                 row_index += 1
-                
-                display_text = f"{flag:<6} | {desc}"
-                
-                cb = ctk.CTkCheckBox(row_frame, text=display_text, variable=var, 
-                                     onvalue=flag, offvalue="", 
-                                     font=ctk.CTkFont(family="Courier", size=13))
-                cb.grid(row=0, column=0, sticky="w", padx=(15, 10))
-                
-                entry = None
-                opt_var = None
-                is_dropdown = False
-                
-                if has_input:
-                    if options:
-                        is_dropdown = True
-                        opt_var = ctk.StringVar(value=options[0])
-                        entry = ctk.CTkOptionMenu(row_frame, values=options, variable=opt_var, state="disabled", width=250, command=self.update_command)
-                        entry.grid(row=0, column=1, sticky="w", padx=(10, 10))
-                    else:
-                        placeholder = flag_item.get("placeholder", "")
-                        entry = ctk.CTkEntry(row_frame, placeholder_text=placeholder, width=250, state="disabled")
-                        entry.grid(row=0, column=1, sticky="w", padx=(10, 10))
-                        entry.bind("<KeyRelease>", self.update_command)
-                        entry.bind("<Control-a>", self.select_all)
+
+                for flag_item in flags:
+                    flag = flag_item["flag"]
+                    desc = flag_item["desc"]
+                    has_input = flag_item.get("has_input", False)
+                    options = flag_item.get("options", None)
                     
-                widget_dict = {
-                    "flag": flag, 
-                    "var": var, 
-                    "cb": cb, 
-                    "entry": entry, 
-                    "opt_var": opt_var,
-                    "is_dropdown": is_dropdown,
-                    "frame": row_frame
-                }
-                self.flag_widgets.append(widget_dict)
-                
-                cb.configure(command=lambda w=widget_dict: self.on_checkbox_click(w))
+                    var = ctk.StringVar(value="")
+                    
+                    row_frame = ctk.CTkFrame(new_frame, fg_color="transparent")
+                    row_frame.grid(row=row_index, column=0, sticky="ew", pady=2)
+                    row_frame.grid_columnconfigure(1, weight=1)
+                    row_index += 1
+                    
+                    display_text = f"{flag:<6} | {desc}"
+                    
+                    cb = ctk.CTkCheckBox(row_frame, text=display_text, variable=var, 
+                                         onvalue=flag, offvalue="", 
+                                         font=ctk.CTkFont(family="Courier", size=13))
+                    cb.grid(row=0, column=0, sticky="w", padx=(15, 10))
+                    
+                    entry = None
+                    opt_var = None
+                    is_dropdown = False
+                    
+                    if has_input:
+                        if options:
+                            is_dropdown = True
+                            opt_var = ctk.StringVar(value=options[0])
+                            entry = ctk.CTkOptionMenu(row_frame, values=options, variable=opt_var, state="disabled", width=250, command=self.update_command)
+                            entry.grid(row=0, column=1, sticky="w", padx=(10, 10))
+                        else:
+                            placeholder = flag_item.get("placeholder", "")
+                            entry = ctk.CTkEntry(row_frame, placeholder_text=placeholder, width=250, state="disabled")
+                            entry.grid(row=0, column=1, sticky="w", padx=(10, 10))
+                            entry.bind("<KeyRelease>", self.update_command)
+                            entry.bind("<Control-a>", self.select_all)
+                        
+                    widget_dict = {
+                        "flag": flag, 
+                        "var": var, 
+                        "cb": cb, 
+                        "entry": entry, 
+                        "opt_var": opt_var,
+                        "is_dropdown": is_dropdown,
+                        "frame": row_frame
+                    }
+                    new_flag_widgets.append(widget_dict)
+                    
+                    cb.configure(command=lambda w=widget_dict: self.on_checkbox_click(w))
+
+            self.tool_caches[tool_name] = {
+                "frame": new_frame,
+                "flag_widgets": new_flag_widgets
+            }
+            
+            self.current_tool_frame = new_frame
+            self.flag_widgets = new_flag_widgets
 
         self.update_command()
 
