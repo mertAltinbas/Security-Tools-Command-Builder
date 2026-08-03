@@ -93,15 +93,48 @@ class CommandBuilderApp(ctk.CTk):
         self.flag_widgets = []
         self.category_groups = []
 
+        self.tool_buttons = []
         for i, tool_name in enumerate(self.tools_data.keys()):
             btn = ctk.CTkButton(self.tools_scroll_frame, text=tool_name, 
                                 command=lambda t=tool_name: self.load_tool(t),
                                 fg_color="transparent", border_width=1, text_color=("gray10", "#DCE4EE"))
             btn.grid(row=i, column=0, padx=20, pady=10, sticky="ew")
+            self.tool_buttons.append(btn)
 
-        if self.tools_data:
-            first_tool = list(self.tools_data.keys())[0]
-            self.load_tool(first_tool)
+        for btn in self.tool_buttons:
+            btn.configure(state="disabled")
+
+        self.loading_overlay = ctk.CTkFrame(self, fg_color=("gray90", "gray13"))
+        self.loading_overlay.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.loading_label = ctk.CTkLabel(
+            self.loading_overlay, text="Loading tools...", font=ctk.CTkFont(size=16)
+        )
+        self.loading_label.place(relx=0.5, rely=0.5, anchor="center")
+
+        self._tools_to_build = list(self.tools_data.keys())
+        self._tools_total = len(self._tools_to_build)
+        self.after(1, self._build_tools_incrementally)
+
+    def _build_tools_incrementally(self):
+        # Pops one tool off the queue, builds its frame, updates the loading
+        # label, then reschedules itself for the next tool. Once the queue
+        # is empty, the overlay is removed and the first tool is shown.
+        if self._tools_to_build:
+            tool_name = self._tools_to_build.pop(0)
+            self._build_tool_frame(tool_name)
+
+            done = self._tools_total - len(self._tools_to_build)
+            self.loading_label.configure(text=f"Loading tools... ({done}/{self._tools_total})")
+
+            self.after(1, self._build_tools_incrementally)
+        else:
+            self.loading_overlay.destroy()
+            for btn in self.tool_buttons:
+                btn.configure(state="normal")
+
+            if self.tools_data:
+                first_tool = list(self.tools_data.keys())[0]
+                self.load_tool(first_tool)
 
     def select_all(self, event):
         # Select all text in an entry widget when Ctrl+A is pressed.
@@ -127,6 +160,94 @@ class CommandBuilderApp(ctk.CTk):
 
         return combined_data
 
+    def _build_tool_frame(self, tool_name):
+        # Construct the scrollable frame and all flag widgets for a tool and
+        # store them in tool_caches. This is the "heavy" part (creating
+        # potentially dozens of CTk widgets), so it's called once up front
+        # for every tool at startup rather than on the user's first click.
+        tool_info = self.tools_data[tool_name]
+
+        new_frame = ctk.CTkScrollableFrame(self.main_frame, label_text=f"{tool_name} Parameters")
+        new_frame.grid(row=3, column=0, sticky="nsew", pady=(0, 15))
+
+        new_flag_widgets = []
+        category_groups = []
+        categories = tool_info.get("categories", {})
+        row_index = 0
+
+        for category_name, flags in categories.items():
+            cat_label = ctk.CTkLabel(new_frame, text=f"── {category_name} ──", 
+                                     font=ctk.CTkFont(size=14, weight="bold"), text_color="#3B8ED0")
+            cat_label.grid(row=row_index, column=0, columnspan=2, sticky="w", pady=(15, 5), padx=5)
+            row_index += 1
+
+            category_rows = []
+            category_groups.append((cat_label, category_rows))
+
+            for flag_item in flags:
+                flag = flag_item["flag"]
+                desc = flag_item["desc"]
+                has_input = flag_item.get("has_input", False)
+                options = flag_item.get("options", None)
+                # Only flags explicitly marked "basic": true in the JSON show
+                # up in Basic mode. Anything without the key (or with it set
+                # to false) is treated as advanced-only.
+                is_basic = flag_item.get("basic", False)
+                
+                var = ctk.StringVar(value="")
+                
+                row_frame = ctk.CTkFrame(new_frame, fg_color="transparent")
+                row_frame.grid(row=row_index, column=0, sticky="ew", pady=2)
+                row_frame.grid_columnconfigure(1, weight=1)
+                row_index += 1
+                category_rows.append(row_frame)
+                
+                display_text = f"{flag:<6} | {desc}"
+                
+                cb = ctk.CTkCheckBox(row_frame, text=display_text, variable=var, 
+                                     onvalue=flag, offvalue="", 
+                                     font=ctk.CTkFont(family="Courier", size=13))
+                cb.grid(row=0, column=0, sticky="w", padx=(15, 10))
+                
+                entry = None
+                opt_var = None
+                is_dropdown = False
+                
+                if has_input:
+                    if options:
+                        is_dropdown = True
+                        opt_var = ctk.StringVar(value=options[0])
+                        entry = ctk.CTkOptionMenu(row_frame, values=options, variable=opt_var, state="disabled", width=250, command=self.update_command)
+                        entry.grid(row=0, column=1, sticky="w", padx=(10, 10))
+                    else:
+                        placeholder = flag_item.get("placeholder", "")
+                        entry = ctk.CTkEntry(row_frame, placeholder_text=placeholder, width=250, state="disabled")
+                        entry.grid(row=0, column=1, sticky="w", padx=(10, 10))
+                        entry.bind("<KeyRelease>", self.update_command)
+                        entry.bind("<Control-a>", self.select_all)
+                    
+                widget_dict = {
+                    "flag": flag, 
+                    "var": var, 
+                    "cb": cb, 
+                    "entry": entry, 
+                    "opt_var": opt_var,
+                    "is_dropdown": is_dropdown,
+                    "frame": row_frame,
+                    "is_basic": is_basic
+                }
+                new_flag_widgets.append(widget_dict)
+                
+                cb.configure(command=lambda w=widget_dict: self.on_checkbox_click(w))
+
+        self.tool_caches[tool_name] = {
+            "frame": new_frame,
+            "flag_widgets": new_flag_widgets,
+            "category_groups": category_groups
+        }
+
+        new_frame.grid_remove()
+
     def load_tool(self, tool_name):
         self.current_tool = tool_name
         tool_info = self.tools_data[tool_name]
@@ -138,96 +259,14 @@ class CommandBuilderApp(ctk.CTk):
         if self.current_tool_frame:
             self.current_tool_frame.grid_remove()
 
-        if tool_name in self.tool_caches:
-            self.current_tool_frame = self.tool_caches[tool_name]["frame"]
-            self.flag_widgets = self.tool_caches[tool_name]["flag_widgets"]
-            self.current_tool_frame.grid() 
-        else:
-            new_frame = ctk.CTkScrollableFrame(self.main_frame, label_text=f"{tool_name} Parameters")
-            new_frame.grid(row=3, column=0, sticky="nsew", pady=(0, 15))
-            
-            new_flag_widgets = []
-            category_groups = [] 
-            categories = tool_info.get("categories", {})
-            row_index = 0
+        if tool_name not in self.tool_caches:
+            self._build_tool_frame(tool_name)
 
-            for category_name, flags in categories.items():
-                cat_label = ctk.CTkLabel(new_frame, text=f"── {category_name} ──", 
-                                         font=ctk.CTkFont(size=14, weight="bold"), text_color="#3B8ED0")
-                cat_label.grid(row=row_index, column=0, columnspan=2, sticky="w", pady=(15, 5), padx=5)
-                row_index += 1
-
-                category_rows = []
-                category_groups.append((cat_label, category_rows))
-
-                for flag_item in flags:
-                    flag = flag_item["flag"]
-                    desc = flag_item["desc"]
-                    has_input = flag_item.get("has_input", False)
-                    options = flag_item.get("options", None)
-                    # Only flags explicitly marked "basic": true in the JSON show
-                    # up in Basic mode. Anything without the key (or with it set
-                    # to false) is treated as advanced-only.
-                    is_basic = flag_item.get("basic", False)
-                    
-                    var = ctk.StringVar(value="")
-                    
-                    row_frame = ctk.CTkFrame(new_frame, fg_color="transparent")
-                    row_frame.grid(row=row_index, column=0, sticky="ew", pady=2)
-                    row_frame.grid_columnconfigure(1, weight=1)
-                    row_index += 1
-                    category_rows.append(row_frame)
-                    
-                    display_text = f"{flag:<6} | {desc}"
-                    
-                    cb = ctk.CTkCheckBox(row_frame, text=display_text, variable=var, 
-                                         onvalue=flag, offvalue="", 
-                                         font=ctk.CTkFont(family="Courier", size=13))
-                    cb.grid(row=0, column=0, sticky="w", padx=(15, 10))
-                    
-                    entry = None
-                    opt_var = None
-                    is_dropdown = False
-                    
-                    if has_input:
-                        if options:
-                            is_dropdown = True
-                            opt_var = ctk.StringVar(value=options[0])
-                            entry = ctk.CTkOptionMenu(row_frame, values=options, variable=opt_var, state="disabled", width=250, command=self.update_command)
-                            entry.grid(row=0, column=1, sticky="w", padx=(10, 10))
-                        else:
-                            placeholder = flag_item.get("placeholder", "")
-                            entry = ctk.CTkEntry(row_frame, placeholder_text=placeholder, width=250, state="disabled")
-                            entry.grid(row=0, column=1, sticky="w", padx=(10, 10))
-                            entry.bind("<KeyRelease>", self.update_command)
-                            entry.bind("<Control-a>", self.select_all)
-                        
-                    widget_dict = {
-                        "flag": flag, 
-                        "var": var, 
-                        "cb": cb, 
-                        "entry": entry, 
-                        "opt_var": opt_var,
-                        "is_dropdown": is_dropdown,
-                        "frame": row_frame,
-                        "is_basic": is_basic
-                    }
-                    new_flag_widgets.append(widget_dict)
-                    
-                    cb.configure(command=lambda w=widget_dict: self.on_checkbox_click(w))
-
-            self.tool_caches[tool_name] = {
-                "frame": new_frame,
-                "flag_widgets": new_flag_widgets,
-                "category_groups": category_groups
-            }
-            
-            self.current_tool_frame = new_frame
-            self.flag_widgets = new_flag_widgets
-            self.category_groups = category_groups
-
-        if tool_name in self.tool_caches:
-            self.category_groups = self.tool_caches[tool_name]["category_groups"]
+        cache = self.tool_caches[tool_name]
+        self.current_tool_frame = cache["frame"]
+        self.flag_widgets = cache["flag_widgets"]
+        self.category_groups = cache["category_groups"]
+        self.current_tool_frame.grid()
 
         self.apply_mode_filter()
         self.update_command()
@@ -330,9 +369,6 @@ class CommandBuilderApp(ctk.CTk):
         # Re-filter the currently visible tool's flags for the new mode.
         self.apply_mode_filter()
         self.update_command()
-        if self.current_tool_frame is not None:
-            self.current_tool_frame.update_idletasks()
-            self.current_tool_frame._parent_canvas.yview_moveto(0)
 
     def apply_mode_filter(self):
         # Show/hide individual flag rows depending on Basic vs Advanced mode.
@@ -353,6 +389,10 @@ class CommandBuilderApp(ctk.CTk):
                 cat_label.grid()
             else:
                 cat_label.grid_remove()
+
+        if self.current_tool_frame is not None:
+            self.current_tool_frame.update_idletasks()
+            self.current_tool_frame._parent_canvas.yview_moveto(0)
 
 if __name__ == "__main__":
     app = CommandBuilderApp()
