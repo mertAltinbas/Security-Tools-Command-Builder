@@ -27,6 +27,17 @@ class CommandBuilderApp(ctk.CTk):
         self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="Tools", font=ctk.CTkFont(size=20, weight="bold"))
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 20))
 
+        self.disclaimer_label = ctk.CTkLabel(
+            self.sidebar_frame,
+            text="Note: It is the user's responsibility to ensure selected flags are compatible. Conflicting flags may cause the tool to fail in the terminal.",
+            text_color="#FF7300",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            justify="left",
+            wraplength=180,
+            anchor="w"
+        )
+        self.disclaimer_label.grid(row=11, column=0, sticky="sew", padx=20, pady=(10, 20))
+
         self.main_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.main_frame.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
         self.main_frame.grid_rowconfigure(2, weight=1)
