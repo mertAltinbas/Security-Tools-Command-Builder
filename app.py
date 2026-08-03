@@ -102,11 +102,21 @@ class CommandBuilderApp(ctk.CTk):
 
     def load_data(self):
         # Read tool definitions from the local JSON file.
-        file_path = "data.json"
-        if os.path.exists(file_path):
-            with open(file_path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        return {}
+        tools_dir = "tools_data"
+        combined_data = {}
+        
+        if os.path.exists(tools_dir):
+            for file_name in os.listdir(tools_dir):
+                if file_name.endswith(".json"):
+                    file_path = os.path.join(tools_dir, file_name)
+                    try:
+                        with open(file_path, "r", encoding="utf-8") as f:
+                            tool_json = json.load(f)
+                            combined_data.update(tool_json)
+                    except Exception as e:
+                        print(f"Error loading {file_name}: {e}")
+
+        return combined_data
 
     def load_tool(self, tool_name):
         # Activate a tool and rebuild the flag UI for it.
