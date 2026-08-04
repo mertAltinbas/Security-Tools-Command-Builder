@@ -391,6 +391,9 @@ class CommandBuilderApp(ctk.CTk):
             messagebox.showerror("Error", "The name 'Custom' is reserved by the system.")
             return
             
+        if not preset_name.startswith("[Custom]"):
+            preset_name = f"[Custom] {preset_name}"
+            
         new_preset_data = {}
         for fw in self.flag_widgets:
             if fw["var"].get() and fw["frame"].winfo_ismapped():
@@ -436,6 +439,10 @@ class CommandBuilderApp(ctk.CTk):
             messagebox.showerror("Error", "Cannot delete the 'Custom' preset.")
             return
 
+        if not selected_preset.startswith("[Custom]"):
+            messagebox.showerror("Permission Denied", "You can only delete custom presets created by you.")
+            return
+
         confirm = messagebox.askyesno("Confirm Deletion", f"Are you sure you want to delete '{selected_preset}'?")
         if not confirm:
             return
@@ -474,7 +481,11 @@ class CommandBuilderApp(ctk.CTk):
             fw["var"].set(False)
             if fw["entry"]:
                 if fw["is_dropdown"]:
-                    fw["opt_var"].set(fw["options"][0])
+                    values = fw["entry"].cget("values")
+                    if values:
+                        fw["opt_var"].set(values[0])
+                    else:
+                        fw["opt_var"].set("")
                 else:
                     fw["entry"].delete(0, 'end')
 
