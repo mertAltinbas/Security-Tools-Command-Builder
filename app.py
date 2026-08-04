@@ -76,6 +76,12 @@ class CommandBuilderApp(ctk.CTk):
         self.preset_menu = ctk.CTkOptionMenu(self.preset_frame, variable=self.preset_var, command=self.apply_preset)
         self.preset_menu.pack(side="left")
 
+        self.save_btn = ctk.CTkButton(self.preset_frame, text="Save Preset", width=60)
+        self.save_btn.pack(side="left", padx=(10, 0))
+
+        self.delete_btn = ctk.CTkButton(self.preset_frame, text="Delete Preset", width=60)
+        self.delete_btn.pack(side="left", padx=(10, 0))
+
         self.output_frame = ctk.CTkFrame(self.main_frame)
         self.output_frame.grid(row=4, column=0, sticky="ew")
         self.output_frame.grid_columnconfigure(0, weight=1)
