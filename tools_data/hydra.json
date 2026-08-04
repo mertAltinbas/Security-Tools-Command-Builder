@@ -43,6 +43,12 @@
         {"flag": "-R", "desc": "Restore aborted session", "has_input": false, "risk_level": 1},
         {"flag": "-I", "desc": "Ignore existing restore file", "has_input": false, "risk_level": 1}
       ]
+    },
+    "presets": {
+      "Custom": {},
+      "SSH Root Brute Force": {"-l": "root", "-P": "/path/pass.txt", "-t": "4", "-f": "", "-v": ""},
+      "FTP Default Credentials": {"-C": "/path/combo.txt", "-t": "16", "-f": "", "-v": ""},
+      "Web Login Stealth Attack": {"-L": "/path/users.txt", "-P": "/path/pass.txt", "-t": "1", "-W": "2", "-f": ""}
     }
   }
 }
