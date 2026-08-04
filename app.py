@@ -76,10 +76,10 @@ class CommandBuilderApp(ctk.CTk):
         self.preset_menu = ctk.CTkOptionMenu(self.preset_frame, variable=self.preset_var, command=self.apply_preset)
         self.preset_menu.pack(side="left")
 
-        self.save_btn = ctk.CTkButton(self.preset_frame, text="Save Preset", width=60)
+        self.save_btn = ctk.CTkButton(self.preset_frame, text="Save Preset", width=60, command=self.save_preset)
         self.save_btn.pack(side="left", padx=(10, 0))
 
-        self.delete_btn = ctk.CTkButton(self.preset_frame, text="Delete Preset", width=60)
+        self.delete_btn = ctk.CTkButton(self.preset_frame, text="Delete Preset", width=60, command=self.delete_preset)
         self.delete_btn.pack(side="left", padx=(10, 0))
 
         self.output_frame = ctk.CTkFrame(self.main_frame)
@@ -399,6 +399,101 @@ class CommandBuilderApp(ctk.CTk):
         if self.current_tool_frame is not None:
             self.current_tool_frame.update_idletasks()
             self.current_tool_frame._parent_canvas.yview_moveto(0)
+
+    def save_preset(self):
+        if not self.current_tool:
+            return
+            
+        dialog = ctk.CTkInputDialog(text="Enter a name for the preset:", title="Save Preset")
+        preset_name = dialog.get_input()
+        
+        if not preset_name or preset_name.strip() == "":
+            return
+            
+        preset_name = preset_name.strip()
+        
+        if preset_name.lower() == "custom":
+            print("Error: 'Custom' is a reserved preset name. Please choose a different name.")
+            return
+            
+        new_preset_data = {}
+        for fw in self.flag_widgets:
+            if fw["var"].get() and fw["frame"].winfo_ismapped():
+                if fw["entry"]:
+                    if fw["is_dropdown"]:
+                        val = fw["opt_var"].get()
+                    else:
+                        val = fw["entry"].get().strip()
+                    new_preset_data[fw["flag"]] = val
+                else:
+                    new_preset_data[fw["flag"]] = "" 
+
+        if "presets" not in self.tools_data[self.current_tool]:
+            self.tools_data[self.current_tool]["presets"] = {}
+            
+        self.tools_data[self.current_tool]["presets"][preset_name] = new_preset_data
+        
+        file_path = os.path.join("tools_data", f"{self.current_tool.lower()}.json")
+        
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                file_data = json.load(f)
+                
+            file_data[self.current_tool] = self.tools_data[self.current_tool]
+            
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(file_data, f, indent=4, ensure_ascii=False)
+                
+            print(f"Success: '{preset_name}' preset saved to {file_path}.")
+                
+        except Exception as e:
+            print(f"Error saving preset: Could not write to JSON file. Details: {e}")
+            return
+            
+        presets = list(self.tools_data[self.current_tool]["presets"].keys())
+        
+        self.preset_menu.configure(values=presets)
+        self.preset_var.set(preset_name)
+
+    def delete_preset(self):
+        if not self.current_tool:
+            return
+
+        selected_preset = self.preset_var.get()
+
+        if selected_preset.lower() == "custom":
+            print("Error: Cannot delete the 'Custom' preset. It is reserved for user input.")
+            return
+
+        if selected_preset in self.tools_data[self.current_tool].get("presets", {}):
+            del self.tools_data[self.current_tool]["presets"][selected_preset]
+            
+            file_path = os.path.join("tools_data", f"{self.current_tool.lower()}.json")
+            
+            try:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    file_data = json.load(f)
+                    
+                file_data[self.current_tool] = self.tools_data[self.current_tool]
+                
+                with open(file_path, "w", encoding="utf-8") as f:
+                    json.dump(file_data, f, indent=4, ensure_ascii=False)
+                    
+                print(f"Success: Preset '{selected_preset}' deleted successfully from {file_path}.")
+                
+            except Exception as e:
+                print(f"Error: Could not update JSON file during deletion. Details: {e}")
+                return
+
+            presets = list(self.tools_data[self.current_tool]["presets"].keys())
+            
+            self.preset_menu.configure(values=presets)
+            
+            self.preset_var.set("Custom")
+            self.apply_preset("Custom")
+            
+        else:
+            print(f"Error: Preset '{selected_preset}' not found in the database.")
 
 if __name__ == "__main__":
     app = CommandBuilderApp()
