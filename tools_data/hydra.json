@@ -1,0 +1,48 @@
+{
+  "Hydra": {
+    "base_command": "hydra",
+    "mandatory_inputs": [
+      "Target",
+      "Service"
+    ],
+    "categories": {
+      "Authentication & Credentials": [
+        {"flag": "-l", "desc": "Login with specific username", "has_input": true, "placeholder": "admin", "basic": true, "risk_level": 4},
+        {"flag": "-L", "desc": "Load usernames from file", "has_input": true, "placeholder": "/path/users.txt", "basic": true, "risk_level": 4},
+        {"flag": "-p", "desc": "Try specific password", "has_input": true, "placeholder": "123456", "basic": true, "risk_level": 4},
+        {"flag": "-P", "desc": "Load passwords from file", "has_input": true, "placeholder": "/path/pass.txt", "basic": true, "risk_level": 4},
+        {"flag": "-C", "desc": "Load 'login:pass' combo file", "has_input": true, "placeholder": "/path/combo.txt", "basic": true, "risk_level": 4},
+        {"flag": "-x", "desc": "Generate passwords (min:max:charset)", "has_input": true, "placeholder": "1:3:aA1", "risk_level": 4},
+        {"flag": "-y", "desc": "Disable symbols in generation (-x)", "has_input": false, "risk_level": 3},
+        {"flag": "-e", "desc": "Additional checks (n=null, s=login as pass, r=reverse)", "has_input": true, "placeholder": "nsr", "basic": true, "risk_level": 3}
+      ],
+      "Target & Service Options": [
+        {"flag": "-M", "desc": "Server list for parallel attacks", "has_input": true, "placeholder": "/path/targets.txt", "risk_level": 5},
+        {"flag": "-s", "desc": "Custom service port", "has_input": true, "placeholder": "2222", "basic": true, "risk_level": 2},
+        {"flag": "-S", "desc": "Connect via SSL", "has_input": false, "risk_level": 1},
+        {"flag": "-O", "desc": "Use old SSL v2 and v3", "has_input": false, "risk_level": 1},
+        {"flag": "-m", "desc": "Module specific options", "has_input": true, "placeholder": "OPT", "risk_level": 2},
+        {"flag": "-4", "desc": "Prefer IPv4", "has_input": false, "risk_level": 1},
+        {"flag": "-6", "desc": "Prefer IPv6", "has_input": false, "risk_level": 1}
+      ],
+      "Tuning & Performance": [
+        {"flag": "-t", "desc": "Number of parallel tasks (threads)", "has_input": true, "placeholder": "16", "basic": true, "risk_level": 5},
+        {"flag": "-u", "desc": "Loop passwords across logins first", "has_input": false, "risk_level": 4},
+        {"flag": "-w", "desc": "Max wait time for responses (sec)", "has_input": true, "placeholder": "32", "risk_level": 2},
+        {"flag": "-W", "desc": "Wait time between connections (sec)", "has_input": true, "placeholder": "1", "risk_level": 1},
+        {"flag": "-c", "desc": "Wait time per login attempt (sec)", "has_input": true, "placeholder": "1", "risk_level": 1}
+      ],
+      "Output & Behavior": [
+        {"flag": "-f", "desc": "Exit after first found pair (per host)", "has_input": false, "basic": true, "risk_level": 1},
+        {"flag": "-F", "desc": "Exit after first found pair (any host)", "has_input": false, "risk_level": 1},
+        {"flag": "-o", "desc": "Write found pairs to file", "has_input": true, "placeholder": "results.txt", "basic": true, "risk_level": 1},
+        {"flag": "-b", "desc": "Output format", "has_input": true, "options": ["text", "json", "jsonv1"], "risk_level": 1},
+        {"flag": "-v", "desc": "Verbose mode", "has_input": false, "basic": true, "risk_level": 1},
+        {"flag": "-V", "desc": "Show login+pass combination per attempt", "has_input": false, "risk_level": 1},
+        {"flag": "-d", "desc": "Debug mode", "has_input": false, "risk_level": 1},
+        {"flag": "-R", "desc": "Restore aborted session", "has_input": false, "risk_level": 1},
+        {"flag": "-I", "desc": "Ignore existing restore file", "has_input": false, "risk_level": 1}
+      ]
+    }
+  }
+}
