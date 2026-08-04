@@ -414,6 +414,8 @@ class CommandBuilderApp(ctk.CTk):
         if preset_name.lower() == "custom":
             print("Error: 'Custom' is a reserved preset name. Please choose a different name.")
             return
+
+        tagged_preset_name = f"[Custom] {preset_name}"
             
         new_preset_data = {}
         for fw in self.flag_widgets:
@@ -426,11 +428,11 @@ class CommandBuilderApp(ctk.CTk):
                     new_preset_data[fw["flag"]] = val
                 else:
                     new_preset_data[fw["flag"]] = "" 
-
+ 
         if "presets" not in self.tools_data[self.current_tool]:
             self.tools_data[self.current_tool]["presets"] = {}
             
-        self.tools_data[self.current_tool]["presets"][preset_name] = new_preset_data
+        self.tools_data[self.current_tool]["presets"][tagged_preset_name] = new_preset_data
         
         file_path = os.path.join("tools_data", f"{self.current_tool.lower()}.json")
         
@@ -443,7 +445,7 @@ class CommandBuilderApp(ctk.CTk):
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(file_data, f, indent=4, ensure_ascii=False)
                 
-            print(f"Success: '{preset_name}' preset saved to {file_path}.")
+            print(f"Success: '{tagged_preset_name}' preset saved to {file_path}.")
                 
         except Exception as e:
             print(f"Error saving preset: Could not write to JSON file. Details: {e}")
@@ -452,7 +454,7 @@ class CommandBuilderApp(ctk.CTk):
         presets = list(self.tools_data[self.current_tool]["presets"].keys())
         
         self.preset_menu.configure(values=presets)
-        self.preset_var.set(preset_name)
+        self.preset_var.set(tagged_preset_name)
 
     def delete_preset(self):
         if not self.current_tool:
