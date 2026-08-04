@@ -1,4 +1,5 @@
 import customtkinter as ctk
+import tkinter.messagebox as messagebox
 import json
 import os
 
@@ -76,11 +77,11 @@ class CommandBuilderApp(ctk.CTk):
         self.preset_menu = ctk.CTkOptionMenu(self.preset_frame, variable=self.preset_var, command=self.apply_preset)
         self.preset_menu.pack(side="left")
 
-        self.save_btn = ctk.CTkButton(self.preset_frame, text="Save Preset", width=60, command=self.save_preset)
-        self.save_btn.pack(side="left", padx=(10, 0))
+        self.save_preset_btn = ctk.CTkButton(self.preset_frame, text="Save Preset", width=60, command=self.save_preset)
+        self.save_preset_btn.pack(side="left", padx=(10, 5))
 
-        self.delete_btn = ctk.CTkButton(self.preset_frame, text="Delete Preset", width=60, command=self.delete_preset)
-        self.delete_btn.pack(side="left", padx=(10, 0))
+        self.delete_preset_btn = ctk.CTkButton( self.preset_frame,  text="Delete",  width=60,  fg_color="#a83232", hover_color="#7a2424", command=self.delete_preset)
+        self.delete_preset_btn.pack(side="left", padx=(0, 10))
 
         self.output_frame = ctk.CTkFrame(self.main_frame)
         self.output_frame.grid(row=4, column=0, sticky="ew")
@@ -296,32 +297,6 @@ class CommandBuilderApp(ctk.CTk):
                 
         self.update_command()
 
-    def apply_preset(self, preset_name):
-        # Apply the selected preset values to the current tool's flags.
-        if not self.current_tool:
-            return
-            
-        preset_data = self.tools_data[self.current_tool]["presets"].get(preset_name, {})
-        
-        for fw in self.flag_widgets:
-            if fw["flag"] in preset_data:
-                fw["var"].set(fw["flag"])
-                if fw["entry"]:
-                    fw["entry"].configure(state="normal")
-                    if fw["is_dropdown"]:
-                        fw["opt_var"].set(preset_data[fw["flag"]])
-                    else:
-                        fw["entry"].delete(0, "end")
-                        fw["entry"].insert(0, preset_data[fw["flag"]])
-            else:
-                fw["var"].set("")
-                if fw["entry"]:
-                    if not fw["is_dropdown"]:
-                        fw["entry"].delete(0, "end")
-                    fw["entry"].configure(state="disabled")
-                    
-        self.update_command()
-
     def update_command(self, event=None):
         # Rebuild the command string whenever inputs change.
         if not self.current_tool:
@@ -404,7 +379,7 @@ class CommandBuilderApp(ctk.CTk):
         if not self.current_tool:
             return
             
-        dialog = ctk.CTkInputDialog(text="Enter a name for the preset:", title="Save Preset")
+        dialog = ctk.CTkInputDialog(text="Enter a name for the new preset:", title="Save Preset")
         preset_name = dialog.get_input()
         
         if not preset_name or preset_name.strip() == "":
@@ -413,17 +388,14 @@ class CommandBuilderApp(ctk.CTk):
         preset_name = preset_name.strip()
         
         if preset_name.lower() == "custom":
-            print("Error: 'Custom' is a reserved preset name. Please choose a different name.")
+            messagebox.showerror("Error", "The name 'Custom' is reserved by the system.")
             return
             
         new_preset_data = {}
         for fw in self.flag_widgets:
             if fw["var"].get() and fw["frame"].winfo_ismapped():
                 if fw["entry"]:
-                    if fw["is_dropdown"]:
-                        val = fw["opt_var"].get()
-                    else:
-                        val = fw["entry"].get().strip()
+                    val = fw["opt_var"].get() if fw["is_dropdown"] else fw["entry"].get().strip()
                     new_preset_data[fw["flag"]] = val
                 else:
                     new_preset_data[fw["flag"]] = "" 
@@ -444,14 +416,13 @@ class CommandBuilderApp(ctk.CTk):
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(file_data, f, indent=4, ensure_ascii=False)
                 
-            print(f"Success: '{preset_name}' preset saved to {file_path}.")
+            messagebox.showinfo("Success", f"Preset '{preset_name}' saved successfully!")
                 
         except Exception as e:
-            print(f"Error saving preset: Could not write to JSON file. Details: {e}")
+            messagebox.showerror("Database Error", f"Could not write to JSON.\nDetails: {e}")
             return
             
         presets = list(self.tools_data[self.current_tool]["presets"].keys())
-        
         self.preset_menu.configure(values=presets)
         self.preset_var.set(preset_name)
 
@@ -462,7 +433,11 @@ class CommandBuilderApp(ctk.CTk):
         selected_preset = self.preset_var.get()
 
         if selected_preset.lower() == "custom":
-            print("Error: Cannot delete the 'Custom' preset. It is reserved for user input.")
+            messagebox.showerror("Error", "Cannot delete the 'Custom' preset.")
+            return
+
+        confirm = messagebox.askyesno("Confirm Deletion", f"Are you sure you want to delete '{selected_preset}'?")
+        if not confirm:
             return
 
         if selected_preset in self.tools_data[self.current_tool].get("presets", {}):
@@ -479,21 +454,46 @@ class CommandBuilderApp(ctk.CTk):
                 with open(file_path, "w", encoding="utf-8") as f:
                     json.dump(file_data, f, indent=4, ensure_ascii=False)
                     
-                print(f"Success: Preset '{selected_preset}' deleted successfully from {file_path}.")
+                messagebox.showinfo("Success", f"Preset '{selected_preset}' deleted.")
                 
             except Exception as e:
-                print(f"Error: Could not update JSON file during deletion. Details: {e}")
+                messagebox.showerror("Database Error", f"Could not update JSON file.\nDetails: {e}")
                 return
 
             presets = list(self.tools_data[self.current_tool]["presets"].keys())
-            
             self.preset_menu.configure(values=presets)
             
             self.preset_var.set("Custom")
             self.apply_preset("Custom")
-            
-        else:
-            print(f"Error: Preset '{selected_preset}' not found in the database.")
+
+    def apply_preset(self, preset_name):
+        if not self.current_tool:
+            return
+
+        for fw in self.flag_widgets:
+            fw["var"].set(False)
+            if fw["entry"]:
+                if fw["is_dropdown"]:
+                    fw["opt_var"].set(fw["options"][0])
+                else:
+                    fw["entry"].delete(0, 'end')
+
+        if preset_name == "Custom":
+            self.update_command()
+            return
+
+        preset_data = self.tools_data[self.current_tool].get("presets", {}).get(preset_name, {})
+        
+        for fw in self.flag_widgets:
+            if fw["flag"] in preset_data:
+                fw["var"].set(True)
+                if fw["entry"]:
+                    if fw["is_dropdown"]:
+                        fw["opt_var"].set(preset_data[fw["flag"]])
+                    else:
+                        fw["entry"].insert(0, preset_data[fw["flag"]])
+                        
+        self.update_command()
 
 if __name__ == "__main__":
     app = CommandBuilderApp()
