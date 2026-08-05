@@ -1,10 +1,21 @@
-import customtkinter as ctk
-import json
-import os
+"""
+UI construction and event handling for the Security Command Builder
+application.
 
-# Set the appearance and color theme for the custom Tkinter UI.
-ctk.set_appearance_mode("System")
-ctk.set_default_color_theme("blue")
+This module owns the CustomTkinter widget tree and every user
+interaction (clicks, key presses, mode/preset selection, the
+lazy-loading overlay). It never touches files or assembles the
+command-line string itself - that's delegated to backend_logic.py -
+and it never contains preset save/apply/delete business logic -
+that's delegated to preset_manager.py. This class is responsible for
+building widgets and wiring them to those two modules.
+"""
+
+import customtkinter as ctk
+
+import backend_logic
+import preset_manager
+
 
 class CommandBuilderApp(ctk.CTk):
     def __init__(self):
@@ -13,8 +24,8 @@ class CommandBuilderApp(ctk.CTk):
         self.title("Security Command Builder")
         self.geometry("1100x700")
 
-        # Load tool configurations from data.json.
-        self.tools_data = self.load_data()
+        # Load tool configurations from the tools_data directory.
+        self.tools_data = backend_logic.load_tools_data()
 
         # Allow the main content area to expand when resizing.
         self.grid_rowconfigure(0, weight=1)
@@ -68,7 +79,7 @@ class CommandBuilderApp(ctk.CTk):
 
         self.preset_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         self.preset_frame.grid(row=2, column=0, sticky="ew", pady=(0, 10))
-        
+
         self.preset_label = ctk.CTkLabel(self.preset_frame, text="Presets:")
         self.preset_label.pack(side="left", padx=(0, 10))
 
@@ -101,7 +112,7 @@ class CommandBuilderApp(ctk.CTk):
 
         self.tool_buttons = []
         for i, tool_name in enumerate(self.tools_data.keys()):
-            btn = ctk.CTkButton(self.tools_scroll_frame, text=tool_name, 
+            btn = ctk.CTkButton(self.tools_scroll_frame, text=tool_name,
                                 command=lambda t=tool_name: self.load_tool(t),
                                 fg_color="transparent", border_width=1, text_color=("gray10", "#DCE4EE"))
             btn.grid(row=i, column=0, padx=20, pady=10, sticky="ew")
@@ -148,24 +159,6 @@ class CommandBuilderApp(ctk.CTk):
         event.widget.icursor('end')
         return 'break'
 
-    def load_data(self):
-        # Read tool definitions from the local JSON file.
-        tools_dir = "tools_data"
-        combined_data = {}
-
-        if os.path.exists(tools_dir):
-            for file_name in os.listdir(tools_dir):
-                if file_name.endswith(".json"):
-                    file_path = os.path.join(tools_dir, file_name)
-                    try:
-                        with open(file_path, "r", encoding="utf-8") as f:
-                            tool_json = json.load(f)
-                            combined_data.update(tool_json)
-                    except Exception as e:
-                        print(f"Error loading {file_name}: {e}")
-
-        return combined_data
-
     def _build_tool_frame(self, tool_name):
         # Construct the scrollable frame and all flag widgets for a tool and
         # store them in tool_caches. This is the "heavy" part (creating
@@ -182,7 +175,7 @@ class CommandBuilderApp(ctk.CTk):
         row_index = 0
 
         for category_name, flags in categories.items():
-            cat_label = ctk.CTkLabel(new_frame, text=f"── {category_name} ──", 
+            cat_label = ctk.CTkLabel(new_frame, text=f"── {category_name} ──",
                                      font=ctk.CTkFont(size=14, weight="bold"), text_color="#3B8ED0")
             cat_label.grid(row=row_index, column=0, columnspan=2, sticky="w", pady=(15, 5), padx=5)
             row_index += 1
@@ -199,26 +192,26 @@ class CommandBuilderApp(ctk.CTk):
                 # up in Basic mode. Anything without the key (or with it set
                 # to false) is treated as advanced-only.
                 is_basic = flag_item.get("basic", False)
-                
+
                 var = ctk.StringVar(value="")
-                
+
                 row_frame = ctk.CTkFrame(new_frame, fg_color="transparent")
                 row_frame.grid(row=row_index, column=0, sticky="ew", pady=2)
                 row_frame.grid_columnconfigure(1, weight=1)
                 row_index += 1
                 category_rows.append(row_frame)
-                
+
                 display_text = f"{flag:<6} | {desc}"
-                
-                cb = ctk.CTkCheckBox(row_frame, text=display_text, variable=var, 
-                                     onvalue=flag, offvalue="", 
+
+                cb = ctk.CTkCheckBox(row_frame, text=display_text, variable=var,
+                                     onvalue=flag, offvalue="",
                                      font=ctk.CTkFont(family="Courier", size=13))
                 cb.grid(row=0, column=0, sticky="w", padx=(15, 10))
-                
+
                 entry = None
                 opt_var = None
                 is_dropdown = False
-                
+
                 if has_input:
                     if options:
                         is_dropdown = True
@@ -231,19 +224,19 @@ class CommandBuilderApp(ctk.CTk):
                         entry.grid(row=0, column=1, sticky="w", padx=(10, 10))
                         entry.bind("<KeyRelease>", self.update_command)
                         entry.bind("<Control-a>", self.select_all)
-                    
+
                 widget_dict = {
-                    "flag": flag, 
-                    "var": var, 
-                    "cb": cb, 
-                    "entry": entry, 
+                    "flag": flag,
+                    "var": var,
+                    "cb": cb,
+                    "entry": entry,
                     "opt_var": opt_var,
                     "is_dropdown": is_dropdown,
                     "frame": row_frame,
                     "is_basic": is_basic
                 }
                 new_flag_widgets.append(widget_dict)
-                
+
                 cb.configure(command=lambda w=widget_dict: self.on_checkbox_click(w))
 
         self.tool_caches[tool_name] = {
@@ -257,7 +250,7 @@ class CommandBuilderApp(ctk.CTk):
     def load_tool(self, tool_name):
         self.current_tool = tool_name
         tool_info = self.tools_data[tool_name]
-        
+
         presets = list(tool_info.get("presets", {"Custom": {}}).keys())
         self.preset_menu.configure(values=presets)
         self.preset_var.set("Custom")
@@ -283,7 +276,7 @@ class CommandBuilderApp(ctk.CTk):
         if widget_dict["var"].get():
             if widget_dict["entry"]:
                 widget_dict["entry"].configure(state="normal")
-                
+
                 if not widget_dict["is_dropdown"]:
                     current_placeholder = widget_dict["entry"].cget("placeholder_text")
                     widget_dict["entry"].configure(placeholder_text="")
@@ -293,34 +286,12 @@ class CommandBuilderApp(ctk.CTk):
                 if not widget_dict["is_dropdown"]:
                     widget_dict["entry"].delete(0, "end")
                 widget_dict["entry"].configure(state="disabled")
-                
+
         self.update_command()
 
     def apply_preset(self, preset_name):
-        # Apply the selected preset values to the current tool's flags.
-        if not self.current_tool:
-            return
-            
-        preset_data = self.tools_data[self.current_tool]["presets"].get(preset_name, {})
-        
-        for fw in self.flag_widgets:
-            if fw["flag"] in preset_data:
-                fw["var"].set(fw["flag"])
-                if fw["entry"]:
-                    fw["entry"].configure(state="normal")
-                    if fw["is_dropdown"]:
-                        fw["opt_var"].set(preset_data[fw["flag"]])
-                    else:
-                        fw["entry"].delete(0, "end")
-                        fw["entry"].insert(0, preset_data[fw["flag"]])
-            else:
-                fw["var"].set("")
-                if fw["entry"]:
-                    if not fw["is_dropdown"]:
-                        fw["entry"].delete(0, "end")
-                    fw["entry"].configure(state="disabled")
-                    
-        self.update_command()
+        # Delegates to preset_manager, which reads/writes app state via `self`.
+        preset_manager.apply_preset(self, preset_name)
 
     def update_command(self, event=None):
         # Rebuild the command string whenever inputs change.
@@ -328,35 +299,11 @@ class CommandBuilderApp(ctk.CTk):
             return
 
         tool_info = self.tools_data[self.current_tool]
-        
-        base = tool_info.get("base_command", "tool")
-        
         target_input = self.target_entry.get().strip()
-        if not target_input:
-            target_input = "[TARGET]"
 
-        selected_flags = []
-        for fw in self.flag_widgets:
-            if fw["var"].get() and fw["frame"].winfo_ismapped():
-                if fw["entry"]:
-                    if fw["is_dropdown"]:
-                        val = fw["opt_var"].get()
-                    else:
-                        val = fw["entry"].get().strip()
-                        
-                    if val:
-                        selected_flags.append(f"{fw['flag']} {val}")
-                    else:
-                        selected_flags.append(fw['flag'])
-                else:
-                    selected_flags.append(fw['flag'])
-
-        if self.current_tool in ["Nmap", "Hydra"]:
-            command_parts = [base] + selected_flags + [target_input]
-        else:
-            command_parts = [base, target_input] + selected_flags
-
-        final_command = " ".join(command_parts)
+        final_command = backend_logic.build_command_string(
+            self.current_tool, tool_info, target_input, self.flag_widgets
+        )
 
         self.command_display.configure(state="normal")
         self.command_display.delete(0, "end")
@@ -367,7 +314,7 @@ class CommandBuilderApp(ctk.CTk):
         # Copy the generated command to clipboard and show temporary feedback.
         self.clipboard_clear()
         self.clipboard_append(self.command_display.get())
-        
+
         self.copy_btn.configure(text="Copied!")
         self.after(1500, lambda: self.copy_btn.configure(text="Copy"))
 
@@ -400,102 +347,9 @@ class CommandBuilderApp(ctk.CTk):
             self.current_tool_frame._parent_canvas.yview_moveto(0)
 
     def save_preset(self):
-        if not self.current_tool:
-            return
-            
-        dialog = ctk.CTkInputDialog(text="Enter a name for the preset:", title="Save Preset")
-        preset_name = dialog.get_input()
-        
-        if not preset_name or preset_name.strip() == "":
-            return
-            
-        preset_name = preset_name.strip()
-        
-        if preset_name.lower() == "custom":
-            print("Error: 'Custom' is a reserved preset name. Please choose a different name.")
-            return
-
-        tagged_preset_name = f"[Custom] {preset_name}"
-            
-        new_preset_data = {}
-        for fw in self.flag_widgets:
-            if fw["var"].get() and fw["frame"].winfo_ismapped():
-                if fw["entry"]:
-                    if fw["is_dropdown"]:
-                        val = fw["opt_var"].get()
-                    else:
-                        val = fw["entry"].get().strip()
-                    new_preset_data[fw["flag"]] = val
-                else:
-                    new_preset_data[fw["flag"]] = "" 
- 
-        if "presets" not in self.tools_data[self.current_tool]:
-            self.tools_data[self.current_tool]["presets"] = {}
-            
-        self.tools_data[self.current_tool]["presets"][tagged_preset_name] = new_preset_data
-        
-        file_path = os.path.join("tools_data", f"{self.current_tool.lower()}.json")
-        
-        try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                file_data = json.load(f)
-                
-            file_data[self.current_tool] = self.tools_data[self.current_tool]
-            
-            with open(file_path, "w", encoding="utf-8") as f:
-                json.dump(file_data, f, indent=4, ensure_ascii=False)
-                
-            print(f"Success: '{tagged_preset_name}' preset saved to {file_path}.")
-                
-        except Exception as e:
-            print(f"Error saving preset: Could not write to JSON file. Details: {e}")
-            return
-            
-        presets = list(self.tools_data[self.current_tool]["presets"].keys())
-        
-        self.preset_menu.configure(values=presets)
-        self.preset_var.set(tagged_preset_name)
+        # Delegates to preset_manager, which reads/writes app state via `self`.
+        preset_manager.save_preset(self)
 
     def delete_preset(self):
-        if not self.current_tool:
-            return
-
-        selected_preset = self.preset_var.get()
-
-        if selected_preset.lower() == "custom":
-            print("Error: Cannot delete the 'Custom' preset. It is reserved for user input.")
-            return
-
-        if selected_preset in self.tools_data[self.current_tool].get("presets", {}):
-            del self.tools_data[self.current_tool]["presets"][selected_preset]
-            
-            file_path = os.path.join("tools_data", f"{self.current_tool.lower()}.json")
-            
-            try:
-                with open(file_path, "r", encoding="utf-8") as f:
-                    file_data = json.load(f)
-                    
-                file_data[self.current_tool] = self.tools_data[self.current_tool]
-                
-                with open(file_path, "w", encoding="utf-8") as f:
-                    json.dump(file_data, f, indent=4, ensure_ascii=False)
-                    
-                print(f"Success: Preset '{selected_preset}' deleted successfully from {file_path}.")
-                
-            except Exception as e:
-                print(f"Error: Could not update JSON file during deletion. Details: {e}")
-                return
-
-            presets = list(self.tools_data[self.current_tool]["presets"].keys())
-            
-            self.preset_menu.configure(values=presets)
-            
-            self.preset_var.set("Custom")
-            self.apply_preset("Custom")
-            
-        else:
-            print(f"Error: Preset '{selected_preset}' not found in the database.")
-
-if __name__ == "__main__":
-    app = CommandBuilderApp()
-    app.mainloop()
+        # Delegates to preset_manager, which reads/writes app state via `self`.
+        preset_manager.delete_preset(self)
