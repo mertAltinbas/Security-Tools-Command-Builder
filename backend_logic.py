@@ -18,6 +18,15 @@ data/logic code never bleed into each other.
 import json
 import os
 
+MANDATORY_FLAG_MAP = {
+    "ffuf": {
+        "Target URL": "-u",
+        "Wordlist": "-w",
+    },
+}
+
+POSITIONAL_BEFORE_FLAGS = set()
+
 
 def load_tools_data(tools_dir="tools_data"):
     """
@@ -98,20 +107,38 @@ def get_selected_flag_values(flag_widgets):
     return selected
 
 
-def build_command_string(tool_name, tool_info, target_input, flag_widgets):
+def get_mandatory_values(mandatory_widgets):
+    """
+    Return a dict of {label: value} for the current tool's mandatory
+    field widgets (as built by ui_manager._build_tool_frame). An
+    empty string means the user hasn't filled that field in yet.
+    """
+    return {mw["label"]: mw["entry"].get().strip() for mw in mandatory_widgets}
+
+
+def build_command_string(tool_name, tool_info, flag_widgets, mandatory_widgets):
     """
     Build the full command-line string for `tool_name` from the
-    current state of its flag widgets.
+    current state of its optional flag widgets and its mandatory
+    field widgets.
 
-    Reproduces the original ordering rule exactly: Nmap and Hydra put
-    the target after all flags, every other tool puts the target
-    immediately after the base command.
+    Each mandatory field is either:
+      - flag-bound (its label is found in MANDATORY_FLAG_MAP for this
+        tool): rendered as "{flag} {value}" and placed at the front
+        of the optional flags, exactly like a regular checked flag.
+      - positional (label not in MANDATORY_FLAG_MAP): rendered as a
+        bare word and placed before or after the optional flags
+        depending on whether `tool_name` is in
+        POSITIONAL_BEFORE_FLAGS (after, by default).
+
+    An empty mandatory field is rendered as "[Label]" so the user can
+    see at a glance what's still missing - this replaces the old
+    single "[TARGET]" placeholder.
     """
     base = tool_info.get("base_command", "tool")
+    flag_map = MANDATORY_FLAG_MAP.get(tool_name, {})
 
-    if not target_input:
-        target_input = "[TARGET]"
-
+    # Optional flags - unchanged from before.
     selected_flags = []
     for fw in flag_widgets:
         if fw["var"].get() and fw["frame"].winfo_ismapped():
@@ -128,9 +155,26 @@ def build_command_string(tool_name, tool_info, target_input, flag_widgets):
             else:
                 selected_flags.append(fw['flag'])
 
-    if tool_name in ["Nmap", "Hydra"]:
-        command_parts = [base] + selected_flags + [target_input]
+    # Mandatory fields - split into flag-bound vs positional.
+    flag_bound_parts = []
+    positional_parts = []
+    for mw in mandatory_widgets:
+        label = mw["label"]
+        value = mw["entry"].get().strip()
+        display_value = value if value else f"[{label}]"
+
+        if label in flag_map:
+            flag_bound_parts.append(f"{flag_map[label]} {display_value}")
+        else:
+            positional_parts.append(display_value)
+
+    # Flag-bound mandatory fields behave like regular flags, so they
+    # sit at the front of the flags portion of the command.
+    all_flags = flag_bound_parts + selected_flags
+
+    if tool_name in POSITIONAL_BEFORE_FLAGS:
+        command_parts = [base] + positional_parts + all_flags
     else:
-        command_parts = [base, target_input] + selected_flags
+        command_parts = [base] + all_flags + positional_parts
 
     return " ".join(command_parts)

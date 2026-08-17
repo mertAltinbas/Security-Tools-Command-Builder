@@ -72,10 +72,10 @@ class CommandBuilderApp(ctk.CTk):
         )
         self.mode_selector.grid(row=0, column=0, padx=20, pady=(0, 10), sticky="ew")
 
-        self.target_entry = ctk.CTkEntry(self.main_frame, placeholder_text="Enter Target IP or URL (e.g., 10.10.10.10)", height=40)
-        self.target_entry.grid(row=1, column=0, sticky="ew", pady=(0, 10))
-        self.target_entry.bind("<KeyRelease>", self.update_command)
-        self.target_entry.bind("<Control-a>", self.select_all)
+        self.mandatory_frame_container = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        self.mandatory_frame_container.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+        self.mandatory_frame_container.grid_columnconfigure(0, weight=1)
+        self.current_mandatory_frame = None
 
         self.preset_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         self.preset_frame.grid(row=2, column=0, sticky="ew", pady=(0, 10))
@@ -109,6 +109,7 @@ class CommandBuilderApp(ctk.CTk):
         self.current_tool = None
         self.flag_widgets = []
         self.category_groups = []
+        self.mandatory_widgets = []
 
         self.tool_buttons = []
         for i, tool_name in enumerate(self.tools_data.keys()):
@@ -165,6 +166,25 @@ class CommandBuilderApp(ctk.CTk):
         # potentially dozens of CTk widgets), so it's called once up front
         # for every tool at startup rather than on the user's first click.
         tool_info = self.tools_data[tool_name]
+
+        new_mandatory_frame = ctk.CTkFrame(self.mandatory_frame_container, fg_color="transparent")
+        new_mandatory_frame.grid_columnconfigure(0, weight=1)
+
+        new_mandatory_widgets = []
+        for i, label in enumerate(tool_info.get("mandatory_inputs", [])):
+            field_label = ctk.CTkLabel(new_mandatory_frame, text=label, anchor="w",
+                                       font=ctk.CTkFont(size=12))
+            field_label.grid(row=i * 2, column=0, sticky="w", padx=(5, 0))
+
+            entry = ctk.CTkEntry(new_mandatory_frame, placeholder_text=f"Enter {label}", height=36)
+            entry.grid(row=i * 2 + 1, column=0, sticky="ew", pady=(0, 8))
+            entry.bind("<KeyRelease>", self.update_command)
+            entry.bind("<Control-a>", self.select_all)
+
+            new_mandatory_widgets.append({"label": label, "entry": entry})
+
+        new_mandatory_frame.grid(row=0, column=0, sticky="ew")
+        new_mandatory_frame.grid_remove()
 
         new_frame = ctk.CTkScrollableFrame(self.main_frame, label_text=f"{tool_name} Parameters")
         new_frame.grid(row=3, column=0, sticky="nsew", pady=(0, 15))
@@ -242,7 +262,9 @@ class CommandBuilderApp(ctk.CTk):
         self.tool_caches[tool_name] = {
             "frame": new_frame,
             "flag_widgets": new_flag_widgets,
-            "category_groups": category_groups
+            "category_groups": category_groups,
+            "mandatory_frame": new_mandatory_frame,
+            "mandatory_widgets": new_mandatory_widgets
         }
 
         new_frame.grid_remove()
@@ -258,6 +280,9 @@ class CommandBuilderApp(ctk.CTk):
         if self.current_tool_frame:
             self.current_tool_frame.grid_remove()
 
+        if self.current_mandatory_frame:
+            self.current_mandatory_frame.grid_remove()
+
         if tool_name not in self.tool_caches:
             self._build_tool_frame(tool_name)
 
@@ -266,6 +291,10 @@ class CommandBuilderApp(ctk.CTk):
         self.flag_widgets = cache["flag_widgets"]
         self.category_groups = cache["category_groups"]
         self.current_tool_frame.grid()
+
+        self.current_mandatory_frame = cache["mandatory_frame"]
+        self.mandatory_widgets = cache["mandatory_widgets"]
+        self.current_mandatory_frame.grid()
 
         self.apply_mode_filter()
         self.update_command()
@@ -299,10 +328,9 @@ class CommandBuilderApp(ctk.CTk):
             return
 
         tool_info = self.tools_data[self.current_tool]
-        target_input = self.target_entry.get().strip()
 
         final_command = backend_logic.build_command_string(
-            self.current_tool, tool_info, target_input, self.flag_widgets
+            self.current_tool, tool_info, self.flag_widgets, self.mandatory_widgets
         )
 
         self.command_display.configure(state="normal")
