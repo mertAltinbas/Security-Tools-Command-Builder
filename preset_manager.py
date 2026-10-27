@@ -1,23 +1,9 @@
 """
 Preset management for the Security Command Builder application.
-
-Handles applying, saving, and deleting custom presets for the tool
-that is currently loaded. Every function here takes the running
-CommandBuilderApp instance (`app`) as its first argument so it can
-read the current tool/flag-widget state and update the preset
-dropdown - but none of these functions build or lay out widgets
-themselves, and none of them touch files directly (that stays in
-backend_logic.py).
-
-`app` is only imported under TYPE_CHECKING for editor/type-checker
-support; at runtime this module never imports ui_manager, which
-avoids a circular import between the two modules.
 """
 
 from typing import TYPE_CHECKING
-
 import customtkinter as ctk
-
 import backend_logic
 
 if TYPE_CHECKING:
@@ -29,7 +15,18 @@ def apply_preset(app: "CommandBuilderApp", preset_name):
     if not app.current_tool:
         return
 
-    preset_data = app.tools_data[app.current_tool]["presets"].get(preset_name, {})
+    preset_data = app.tools_data[app.current_tool].get("presets", {}).get(preset_name, {})
+
+    # Check if the preset requires Advanced mode to display any of its flags
+    needs_advanced = False
+    for fw in app.flag_widgets:
+        if fw["flag"] in preset_data and not fw.get("is_basic", False):
+            needs_advanced = True
+            break
+
+    if needs_advanced and app.current_mode.get() != "Advanced":
+        app.current_mode.set("Advanced")
+        app.apply_mode_filter()
 
     for fw in app.flag_widgets:
         if fw["flag"] in preset_data:
@@ -48,14 +45,14 @@ def apply_preset(app: "CommandBuilderApp", preset_name):
                     fw["entry"].delete(0, "end")
                 fw["entry"].configure(state="disabled")
 
+    if app.current_tool in app.tool_caches:
+        app.tool_caches[app.current_tool]["active_preset"] = preset_name
+
     app.update_command()
 
 
 def save_preset(app: "CommandBuilderApp"):
-    """
-    Prompt the user for a preset name, capture the currently selected
-    flags/values, and persist them into the tool's JSON file.
-    """
+    """Prompt the user for a preset name, capture selected flags, and persist to JSON."""
     if not app.current_tool:
         return
 
@@ -72,7 +69,6 @@ def save_preset(app: "CommandBuilderApp"):
         return
 
     tagged_preset_name = f"[Custom] {preset_name}"
-
     new_preset_data = backend_logic.get_selected_flag_values(app.flag_widgets)
 
     if "presets" not in app.tools_data[app.current_tool]:
@@ -91,9 +87,10 @@ def save_preset(app: "CommandBuilderApp"):
     print(f"Success: '{tagged_preset_name}' preset saved to {file_path_for_log}.")
 
     presets = list(app.tools_data[app.current_tool]["presets"].keys())
-
     app.preset_menu.configure(values=presets)
     app.preset_var.set(tagged_preset_name)
+    if app.current_tool in app.tool_caches:
+        app.tool_caches[app.current_tool]["active_preset"] = tagged_preset_name
 
 
 def delete_preset(app: "CommandBuilderApp"):
@@ -121,11 +118,9 @@ def delete_preset(app: "CommandBuilderApp"):
         print(f"Success: Preset '{selected_preset}' deleted successfully from {file_path_for_log}.")
 
         presets = list(app.tools_data[app.current_tool]["presets"].keys())
-
         app.preset_menu.configure(values=presets)
 
         app.preset_var.set("Custom")
         apply_preset(app, "Custom")
-
     else:
         print(f"Error: Preset '{selected_preset}' not found in the database.")
