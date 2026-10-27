@@ -4,8 +4,6 @@
     "mandatory_inputs": ["Target URL", "Wordlist"],
     "categories": {
       "HTTP Options": [
-        {"flag": "-u", "desc": "Target URL (must contain FUZZ)", "has_input": true, "placeholder": "http://10.10.10.10/FUZZ", "risk_level": 3},
-        {"flag": "-H", "desc": "Header 'Name: Value' (Can be used multiple times)", "has_input": true, "placeholder": "Authorization: Bearer xyz", "risk_level": 2, "basic": true},
         {"flag": "-X", "desc": "HTTP method to use", "has_input": true, "options": ["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS", "PATCH"], "risk_level": 2, "basic": true},
         {"flag": "-b", "desc": "Cookie data 'NAME1=VALUE1; NAME2=VALUE2'", "has_input": true, "placeholder": "PHPSESSID=123456", "risk_level": 2},
         {"flag": "-d", "desc": "POST data", "has_input": true, "placeholder": "username=admin&password=FUZZ", "risk_level": 3, "basic": true},
