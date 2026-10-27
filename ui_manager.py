@@ -1,14 +1,5 @@
 """
-UI construction and event handling for the Security Command Builder
-application.
-
-This module owns the CustomTkinter widget tree and every user
-interaction (clicks, key presses, mode/preset selection, the
-lazy-loading overlay). It never touches files or assembles the
-command-line string itself - that's delegated to backend_logic.py -
-and it never contains preset save/apply/delete business logic -
-that's delegated to preset_manager.py. This class is responsible for
-building widgets and wiring them to those two modules.
+UI construction and event handling for the Security Command Builder application.
 """
 
 import customtkinter as ctk
@@ -20,14 +11,11 @@ import preset_manager
 class CommandBuilderApp(ctk.CTk):
     def __init__(self):
         super().__init__()
-        # Window title and startup size.
         self.title("Security Command Builder")
         self.geometry("1100x700")
 
-        # Load tool configurations from the tools_data directory.
         self.tools_data = backend_logic.load_tools_data()
 
-        # Allow the main content area to expand when resizing.
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
@@ -97,7 +85,12 @@ class CommandBuilderApp(ctk.CTk):
         self.output_frame.grid(row=4, column=0, sticky="ew")
         self.output_frame.grid_columnconfigure(0, weight=1)
 
-        self.command_display = ctk.CTkEntry(self.output_frame, state="disabled", font=ctk.CTkFont(family="Courier", weight="bold", size=14), height=45)
+        self.command_display = ctk.CTkEntry(
+            self.output_frame,
+            state="readonly",
+            font=ctk.CTkFont(family="Courier", weight="bold", size=14),
+            height=45
+        )
         self.command_display.grid(row=0, column=0, sticky="ew", padx=(10, 10), pady=10)
         self.command_display.bind("<Control-a>", self.select_all)
 
@@ -113,9 +106,14 @@ class CommandBuilderApp(ctk.CTk):
 
         self.tool_buttons = []
         for i, tool_name in enumerate(self.tools_data.keys()):
-            btn = ctk.CTkButton(self.tools_scroll_frame, text=tool_name,
-                                command=lambda t=tool_name: self.load_tool(t),
-                                fg_color="transparent", border_width=1, text_color=("gray10", "#DCE4EE"))
+            btn = ctk.CTkButton(
+                self.tools_scroll_frame,
+                text=tool_name,
+                command=lambda t=tool_name: self.load_tool(t),
+                fg_color="transparent",
+                border_width=1,
+                text_color=("gray10", "#DCE4EE")
+            )
             btn.grid(row=i, column=0, padx=20, pady=10, sticky="ew")
             self.tool_buttons.append(btn)
 
@@ -134,9 +132,6 @@ class CommandBuilderApp(ctk.CTk):
         self.after(1, self._build_tools_incrementally)
 
     def _build_tools_incrementally(self):
-        # Pops one tool off the queue, builds its frame, updates the loading
-        # label, then reschedules itself for the next tool. Once the queue
-        # is empty, the overlay is removed and the first tool is shown.
         if self._tools_to_build:
             tool_name = self._tools_to_build.pop(0)
             self._build_tool_frame(tool_name)
@@ -155,16 +150,18 @@ class CommandBuilderApp(ctk.CTk):
                 self.load_tool(first_tool)
 
     def select_all(self, event):
-        # Select all text in an entry widget when Ctrl+A is pressed.
-        event.widget.select_range(0, 'end')
-        event.widget.icursor('end')
-        return 'break'
+        event.widget.select_range(0, "end")
+        event.widget.icursor("end")
+        return "break"
+
+    def on_flag_input_change(self, event=None):
+        """When a user edits a flag's value or dropdown, mark preset as Custom."""
+        self.preset_var.set("Custom")
+        if self.current_tool in self.tool_caches:
+            self.tool_caches[self.current_tool]["active_preset"] = "Custom"
+        self.update_command()
 
     def _build_tool_frame(self, tool_name):
-        # Construct the scrollable frame and all flag widgets for a tool and
-        # store them in tool_caches. This is the "heavy" part (creating
-        # potentially dozens of CTk widgets), so it's called once up front
-        # for every tool at startup rather than on the user's first click.
         tool_info = self.tools_data[tool_name]
 
         new_mandatory_frame = ctk.CTkFrame(self.mandatory_frame_container, fg_color="transparent")
@@ -172,8 +169,9 @@ class CommandBuilderApp(ctk.CTk):
 
         new_mandatory_widgets = []
         for i, label in enumerate(tool_info.get("mandatory_inputs", [])):
-            field_label = ctk.CTkLabel(new_mandatory_frame, text=label, anchor="w",
-                                       font=ctk.CTkFont(size=12))
+            field_label = ctk.CTkLabel(
+                new_mandatory_frame, text=label, anchor="w", font=ctk.CTkFont(size=12)
+            )
             field_label.grid(row=i * 2, column=0, sticky="w", padx=(5, 0))
 
             entry = ctk.CTkEntry(new_mandatory_frame, placeholder_text=f"Enter {label}", height=36)
@@ -195,8 +193,12 @@ class CommandBuilderApp(ctk.CTk):
         row_index = 0
 
         for category_name, flags in categories.items():
-            cat_label = ctk.CTkLabel(new_frame, text=f"── {category_name} ──",
-                                     font=ctk.CTkFont(size=14, weight="bold"), text_color="#3B8ED0")
+            cat_label = ctk.CTkLabel(
+                new_frame,
+                text=f"── {category_name} ──",
+                font=ctk.CTkFont(size=14, weight="bold"),
+                text_color="#3B8ED0"
+            )
             cat_label.grid(row=row_index, column=0, columnspan=2, sticky="w", pady=(15, 5), padx=5)
             row_index += 1
 
@@ -208,9 +210,6 @@ class CommandBuilderApp(ctk.CTk):
                 desc = flag_item["desc"]
                 has_input = flag_item.get("has_input", False)
                 options = flag_item.get("options", None)
-                # Only flags explicitly marked "basic": true in the JSON show
-                # up in Basic mode. Anything without the key (or with it set
-                # to false) is treated as advanced-only.
                 is_basic = flag_item.get("basic", False)
 
                 var = ctk.StringVar(value="")
@@ -223,9 +222,14 @@ class CommandBuilderApp(ctk.CTk):
 
                 display_text = f"{flag:<6} | {desc}"
 
-                cb = ctk.CTkCheckBox(row_frame, text=display_text, variable=var,
-                                     onvalue=flag, offvalue="",
-                                     font=ctk.CTkFont(family="Courier", size=13))
+                cb = ctk.CTkCheckBox(
+                    row_frame,
+                    text=display_text,
+                    variable=var,
+                    onvalue=flag,
+                    offvalue="",
+                    font=ctk.CTkFont(family="Courier", size=13)
+                )
                 cb.grid(row=0, column=0, sticky="w", padx=(15, 10))
 
                 entry = None
@@ -236,13 +240,22 @@ class CommandBuilderApp(ctk.CTk):
                     if options:
                         is_dropdown = True
                         opt_var = ctk.StringVar(value=options[0])
-                        entry = ctk.CTkOptionMenu(row_frame, values=options, variable=opt_var, state="disabled", width=250, command=self.update_command)
+                        entry = ctk.CTkOptionMenu(
+                            row_frame,
+                            values=options,
+                            variable=opt_var,
+                            state="disabled",
+                            width=250,
+                            command=self.on_flag_input_change
+                        )
                         entry.grid(row=0, column=1, sticky="w", padx=(10, 10))
                     else:
                         placeholder = flag_item.get("placeholder", "")
-                        entry = ctk.CTkEntry(row_frame, placeholder_text=placeholder, width=250, state="disabled")
+                        entry = ctk.CTkEntry(
+                            row_frame, placeholder_text=placeholder, width=250, state="disabled"
+                        )
                         entry.grid(row=0, column=1, sticky="w", padx=(10, 10))
-                        entry.bind("<KeyRelease>", self.update_command)
+                        entry.bind("<KeyRelease>", self.on_flag_input_change)
                         entry.bind("<Control-a>", self.select_all)
 
                 widget_dict = {
@@ -253,7 +266,8 @@ class CommandBuilderApp(ctk.CTk):
                     "opt_var": opt_var,
                     "is_dropdown": is_dropdown,
                     "frame": row_frame,
-                    "is_basic": is_basic
+                    "is_basic": is_basic,
+                    "is_visible": True
                 }
                 new_flag_widgets.append(widget_dict)
 
@@ -264,7 +278,8 @@ class CommandBuilderApp(ctk.CTk):
             "flag_widgets": new_flag_widgets,
             "category_groups": category_groups,
             "mandatory_frame": new_mandatory_frame,
-            "mandatory_widgets": new_mandatory_widgets
+            "mandatory_widgets": new_mandatory_widgets,
+            "active_preset": "Custom"
         }
 
         new_frame.grid_remove()
@@ -272,10 +287,6 @@ class CommandBuilderApp(ctk.CTk):
     def load_tool(self, tool_name):
         self.current_tool = tool_name
         tool_info = self.tools_data[tool_name]
-
-        presets = list(tool_info.get("presets", {"Custom": {}}).keys())
-        self.preset_menu.configure(values=presets)
-        self.preset_var.set("Custom")
 
         if self.current_tool_frame:
             self.current_tool_frame.grid_remove()
@@ -296,16 +307,22 @@ class CommandBuilderApp(ctk.CTk):
         self.mandatory_widgets = cache["mandatory_widgets"]
         self.current_mandatory_frame.grid()
 
+        presets = list(tool_info.get("presets", {"Custom": {}}).keys())
+        self.preset_menu.configure(values=presets)
+        saved_preset = cache.get("active_preset", "Custom")
+        self.preset_var.set(saved_preset if saved_preset in presets else "Custom")
+
         self.apply_mode_filter()
         self.update_command()
 
     def on_checkbox_click(self, widget_dict):
-        # Switch to custom mode when the user modifies a flag selection.
         self.preset_var.set("Custom")
+        if self.current_tool in self.tool_caches:
+            self.tool_caches[self.current_tool]["active_preset"] = "Custom"
+
         if widget_dict["var"].get():
             if widget_dict["entry"]:
                 widget_dict["entry"].configure(state="normal")
-
                 if not widget_dict["is_dropdown"]:
                     current_placeholder = widget_dict["entry"].cget("placeholder_text")
                     widget_dict["entry"].configure(placeholder_text="")
@@ -319,11 +336,9 @@ class CommandBuilderApp(ctk.CTk):
         self.update_command()
 
     def apply_preset(self, preset_name):
-        # Delegates to preset_manager, which reads/writes app state via `self`.
         preset_manager.apply_preset(self, preset_name)
 
     def update_command(self, event=None):
-        # Rebuild the command string whenever inputs change.
         if not self.current_tool:
             return
 
@@ -336,10 +351,9 @@ class CommandBuilderApp(ctk.CTk):
         self.command_display.configure(state="normal")
         self.command_display.delete(0, "end")
         self.command_display.insert(0, final_command)
-        self.command_display.configure(state="disabled")
+        self.command_display.configure(state="readonly")
 
     def copy_command(self):
-        # Copy the generated command to clipboard and show temporary feedback.
         self.clipboard_clear()
         self.clipboard_append(self.command_display.get())
 
@@ -347,7 +361,6 @@ class CommandBuilderApp(ctk.CTk):
         self.after(1500, lambda: self.copy_btn.configure(text="Copy"))
 
     def on_mode_change(self, selected_mode):
-        # Re-filter the currently visible tool's flags for the new mode.
         self.apply_mode_filter()
         self.update_command()
 
@@ -357,6 +370,7 @@ class CommandBuilderApp(ctk.CTk):
         visible_frames = set()
         for fw in self.flag_widgets:
             show = True if mode == "Advanced" else fw.get("is_basic", False)
+            fw["is_visible"] = show
             if show:
                 fw["frame"].grid()
                 visible_frames.add(fw["frame"])
@@ -375,9 +389,7 @@ class CommandBuilderApp(ctk.CTk):
             self.current_tool_frame._parent_canvas.yview_moveto(0)
 
     def save_preset(self):
-        # Delegates to preset_manager, which reads/writes app state via `self`.
         preset_manager.save_preset(self)
 
     def delete_preset(self):
-        # Delegates to preset_manager, which reads/writes app state via `self`.
         preset_manager.delete_preset(self)
